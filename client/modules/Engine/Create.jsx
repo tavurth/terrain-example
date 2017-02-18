@@ -16,11 +16,12 @@ let createBasic = {
      * @param {} element which the engine should be appended to
      */
     engine: (element) => {
-        let engine = new THREE.WebGLRenderer({ antialias: false });
+        let engine = new THREE.WebGLRenderer({
+            canvas: element,
+            antialias: false
+        });
         engine.setPixelRatio(window.devicePixelRatio);
         engine.setSize(window.innerWidth, window.innerHeight);
-
-        element.appendChild(engine.domElement);
 
         return engine
     },
@@ -67,38 +68,6 @@ let createBasic = {
     },
 };
 
-let createCombined = {
-    basic: (canvasId, createCamera = true) => {
-        let { canvas, engine, scene, camera } = false;
-        if (canvas = document.getElementById(canvasId)) {
-
-            // Was the engine successfully initialised
-            if (engine = createBasic.engine(canvas)) {
-                scene = createBasic.scene();
-
-                // Should we create the camera? Has the scene been initialised?
-                if (scene && createCamera) {
-                    camera = createBasic.camera(scene);
-                }
-            }
-        }
-
-        let group = {
-            scene,
-            canvas,
-            engine,
-            camera
-        };
-
-        // TODO: Add the ability to disable this code through kwargs
-        // Set the group in the group-server (so that other areas of code can call B.group.get)
-        Group.set(group);
-
-        return group;
-    }
-};
-
 export default {
     ...createBasic,
-    ...createCombined
 }

@@ -20,10 +20,6 @@ class Terrain extends THREE.Object3D {
 
         // Adding default options
         options = {
-            ...options,
-            nLevels:        3,      // Number of rings of nodes to generate
-            load:           true,   // Should we load immediately?
-
             // Definitions to be passed to fragment & vertex shaders
             defines: {
                 CLIP_EDGE:      0.5,    // Border clipping (Gives a smoother transition between tesselation levels)
@@ -50,11 +46,14 @@ class Terrain extends THREE.Object3D {
                 ...(options.material || {}),  // Include user material
             },
 
+            load:           options.load    || true,   // Should we load immediately?
+            nLevels:        options.nLevels || 3,      // Number of rings of nodes to generate
+
             // Send in progress loading functions
-            onError:        (errorMessage) => {},
-            onLoad:         (terrainObject) => {},
-            onProgress:     (name, itemsLoaded, itemsTotal) => {},
-            onStart:        (name, itemsLoaded, itemsTotal) => {},
+            onError:        options.onError     || ((errorMessage) => {}),
+            onLoad:         options.onLoad      || ((terrainObject) => {}),
+            onProgress:     options.onProgress  || ((name, itemsLoaded, itemsTotal) => {}),
+            onStart:        options.onStart     || ((name, itemsLoaded, itemsTotal) => {}),
         };
 
         // Check to see if the user has passed in a heightmap
@@ -233,13 +232,13 @@ class Terrain extends THREE.Object3D {
             ...this.material,
 
             uniforms: {
-                ...this.material.uniforms,
                 ...this.uniforms,
+                ...this.material.uniforms,
                 ...node.uniforms
             },
             defines: {
-                ...this.material.defines,
                 ...this.defines,
+                ...this.material.defines,
                 ...node.defines
             },
         };
@@ -251,7 +250,7 @@ class Terrain extends THREE.Object3D {
         toReturn.name = 'TerrainNode x:' + Math.floor(node.uniforms.nodePosition.x) + ' y:' + Math.floor(node.uniforms.nodePosition.y);
 
         // Prevent frustrum culling of nodes which are close to the camera
-        toReturn.frustumCulled = false;
+        toReturn.frustumCulled = true;
 
         // Set the bounding sphere and the nodePosition for culling
         toReturn.position.copy(node.uniforms.nodePosition);
@@ -261,16 +260,13 @@ class Terrain extends THREE.Object3D {
     }
 
     animate(camera) {
-        // this.position.z = - camera.position.z;
         this.position.x = camera.position.x / 2;
         this.position.y = camera.position.y / 2;
-
-        return;
 
         // Only update the bounding spheres once every BOUNDING_SPHERE_UPDATE frames
         if (this.updateBoundingSpheres % UPDATE_BOUNDING_SPHERES == 0) {
 
-            let nI     = this.children.length;
+            let nI = this.children.length;
 
             while (nI--) {
                 this.children[nI].geometry.boundingSphere.center.copy(this.position);

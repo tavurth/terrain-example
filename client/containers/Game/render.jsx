@@ -13,8 +13,6 @@ let init = () => {
         group.camera.position.x += group.camera.velocity.x /= 1.15;
         group.camera.position.y += group.camera.velocity.y /= 1.15;
 
-        // terrain2.animate(group.camera);
-
         group.render();
     }
     animate();

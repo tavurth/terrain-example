@@ -13,8 +13,8 @@ let getUv = `
  */
 vec2 getUv(vec3 p) {
 
-    float u = (p.x + nodePosition.x) / WORLD_SIZE_X;
-    float v = (p.y + nodePosition.y) / WORLD_SIZE_Y;
+    float u = (nodePosition.x + p.x) / WORLD_SIZE_X;
+    float v = (nodePosition.y + p.y) / WORLD_SIZE_Y;
 
     return vec2(u, v);
 }
@@ -43,43 +43,35 @@ let getPosition = `
  *                   and as we will mutate the mesh, to keep the terrain from flickering
  */
 vec3 getPosition(vec3 cPosition) {
-    _vPosition  = position;
+    vec3 vPosition = position;
 
-    // Scale by the size of this NODE
-    _vPosition *= nodeScale;
+    // Scale by the size of this node
+    vPosition *= nodeScale;
 
-    // Translate by camera and NODE coordinates
-    _vPosition   += cPosition;
-    // _vPosition   += nodePosition;
+    // Translate by camera coordinates
+    vPosition += cPosition;
+    // vPosition += nodePosition;
 
-    _vPosition.z = 0.;
+    vPosition.z = 0.;
 
-    return _vPosition;
+    return vPosition;
 }
 `;
 
-// precision highp int;
-// precision highp float;
-// uniform mat4 modelViewMatrix;
-// uniform mat4 projectionMatrix;
-//
-// attribute vec2 uv;
-// attribute vec3 normal;
-// attribute vec3 position;
+let initialize = `
+/**
+ * Initialize variables, translating the vertex position and calculating elevation
+ * This function should be called at the beginning of your vertex shader
+ */
+void initialize() {
+    _vPosition = clipSides(getPosition(cPosition));
+    _vElevation = getElevation(heightmap, _vPosition);
 
-let vShader = `
-uniform sampler2D  texture;
-uniform sampler2D  heightmap;
-uniform int        nodeEdge;
-uniform float      nodeScale;
-uniform vec3       cPosition;
-uniform vec3       nodePosition;
+    _vPosition.z = _vElevation;
+}
+`;
 
-// Share these as required to fragmentshader
-vec3  _vPosition;
-float _vElevation;
-float _vClipFactor;
-
+let clipSides = `
 /**
  * Returns true or false if the current nodeEdge matches the passed edge bitmask
  *
@@ -104,19 +96,19 @@ float getClip(vec2 p) {
     float clip;
     float toReturn = 0.0;
 
-    if (clipSideMatches(CLIP_RT) && p.x >= 1. - CLIP_EDGE*2.) {
-        clip     = 1.0 - clamp((1.0 - p.x) / (CLIP_EDGE*2.), 0.0, 1.0);
+    if (clipSideMatches(CLIP_RT) && p.x >= 1. - CLIP_EDGE) {
+        clip     = 1.0 - clamp((1.0 - p.x) / CLIP_EDGE, 0.0, 1.0);
         toReturn = max(clip, toReturn);
     }
-    if (clipSideMatches(CLIP_UP) && p.y >= 1. - CLIP_EDGE*2.) {
-        clip     = 1.0 - clamp((1.0 - p.y) / (CLIP_EDGE*2.), 0.0, 1.0);
+    if (clipSideMatches(CLIP_UP) && p.y >= 1. - CLIP_EDGE) {
+        clip     = 1.0 - clamp((1.0 - p.y) / CLIP_EDGE, 0.0, 1.0);
         toReturn = max(clip, toReturn);
     }
     if (clipSideMatches(CLIP_LT) && p.x <= CLIP_EDGE) {
         clip     = 1.0 - clamp(p.x / CLIP_EDGE, 0.0, 1.0);
         toReturn = max(clip, toReturn);
     }
-    if (clipSideMatches(CLIP_DN) && p.y <= CLIP_EDGE) {
+    if (clipSideMatches(CLIP_DN) && p.y <= CLIP_EDGE * 2.) {
         clip     = 1.0 - clamp(p.y / CLIP_EDGE, 0.0, 1.0);
         toReturn = max(clip, toReturn);
     }
@@ -138,8 +130,8 @@ vec3 clipSides(vec3 p) {
     p = floor(p / grid) * grid;
 
     // We're not currently close to an nodeEdge
-    // nodeEdges are defined by a doubling of nodeScale for the same TESSELATION
-    if (_vClipFactor <= 0.1) {
+    // nodeEdges are defined by a doubling of nodeScale for the same nodeTesselation
+    if (_vClipFactor <= 0.01) {
         return p;
     }
 
@@ -155,33 +147,39 @@ vec3 clipSides(vec3 p) {
     return mix(p, p2, _vClipFactor);
 }
 `
+// precision highp int;
+// precision highp float;
+// uniform mat4 modelViewMatrix;
+// uniform mat4 projectionMatrix;
+//
+// attribute vec2 uv;
+// attribute vec3 normal;
+// attribute vec3 position;
+
+let vShader = `
+uniform sampler2D  texture;
+uniform sampler2D  heightmap;
+uniform int        nodeEdge;
+uniform float      nodeScale;
+uniform vec3       cPosition;
+uniform vec3       nodePosition;
+
+// Share these as required to fragmentshader
+vec3  _vPosition;
+float _vElevation;
+float _vClipFactor;
+`
             + rand
             + getUv
             + getElevation
             + getPosition
-            + `
-
-/**
- * Initialize variables, translating the vertex position and calculating elevation
- * This function should be called at the beginning of your vertex shader
- */
-void initialize() {
-    _vPosition = clipSides(getPosition(cPosition));
-    _vElevation = getElevation(heightmap, _vPosition);
-
-    _vPosition.z = _vElevation;
-}
-`;
-
-// precision highp int;
-// precision highp float;
+            + clipSides
+            + initialize;
 
 let fShader = `
-
 uniform vec3 nodePosition;
 uniform sampler2D  texture;
 uniform sampler2D  heightmap;
-
 `
             + rand
             + getUv
@@ -223,9 +221,8 @@ export default class TerrainShaderMaterial extends THREE.ShaderMaterial {
             return super();
         }
 
-        let shaderOptions = {
-            ...options.material,
-        };
+        // Shallow copy to make sure we don't overwrite ptr values
+        let shaderOptions = { ...options };
 
         // Uniforms change on each node, and will be updated when we clone this shader
         shaderOptions.uniforms = TerrainShaderMaterial.getUniforms(options);
@@ -287,6 +284,7 @@ export default class TerrainShaderMaterial extends THREE.ShaderMaterial {
     static mixUniforms(shader, options = {}) {
 
         let newUniforms = TerrainShaderMaterial.getUniforms(options);
+
         shader.uniforms = {
             ...shader.uniforms,
             ...newUniforms

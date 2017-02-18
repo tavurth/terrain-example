@@ -4,6 +4,7 @@ import noise from './Noise'
 import group from './Groups'
 import Create from './Create'
 import Vectors from './Vectors'
+import Registry from './Registry'
 import LoadingScreen from './LoadingScreen'
 
 /**
@@ -16,5 +17,6 @@ export default {
     create: {
         ...Create
     },
+    ...Registry,
     LoadingScreen
 }

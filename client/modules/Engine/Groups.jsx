@@ -1,54 +1,91 @@
 "use strict";
 
+import Engine from './'
 import Utils from '../Utils'
 
 let currentGroup = false;
 
 export const get = () => {
-	return currentGroup;
+    return currentGroup;
+};
+
+export const set = (newGroup) => {
+    currentGroup = newGroup;
+    setup(newGroup);
 };
 
 let setup = (group) => {
     group.renderCallbacks = {};
 
-    group.stats = new Stats();
-		group.canvas.appendChild(group.stats.dom);
+    // group.stats = new Stats();
+    // group.canvas.appendChild(group.stats.dom);
+    group.status = 'RUNNING';
+    group.uid = Utils.generate_name('Group');
 
     window.scene = group.scene;
-
-    // Register a new render callback which should be called each frame
-    group.register = function(callback) {
-        let name = Utils.generate_name('Group_Callback_Function');
-        group.renderCallbacks[name] = callback;
-
-        return name;
-    };
-
-    // Unregister a render callback
-    group.unregister = function(name) {
-        if (group.renderCallbacks.hasOwnProperty(name))
-            delete group.renderCallbacks[name];
-    };
+    window.gl = group.engine.context;
 
     // Render and perform post render functionality
     group.render = function(name) {
-
-        group.stats.update();
+        // group.stats.update();
 
         // Call all registered render functions
-        Object.keys(group.renderCallbacks).map(key => group.renderCallbacks[key]());
+        Engine.callbacks('render').call();
 
         group.engine.render(group.scene, group.camera);
     };
+
+    group.dispose = function() {
+        group.status = 'STOPPED';
+        group.engine.dispose();
+
+        for (let key in group.renderCallbacks) {
+            group.unregister(key);
+        }
+
+        if (group.uid == currentGroup.uid) {
+            console.log('Removing group', group.uid);
+            currentGroup = false;
+        }
+    }
+
+    console.log(group);
 };
 
-export const set = (newGroup) => {
-	  currentGroup = newGroup;
+let create = (canvasId, createCamera = true) => {
+    let { canvas, engine, scene, camera } = false;
 
-    setup(newGroup);
+    if (canvas = document.getElementById(canvasId)) {
+
+        // Was the engine successfully initialised
+        if (engine = Engine.create.engine(canvas)) {
+            scene = Engine.create.scene();
+
+            // Should we create the camera? Has the scene been initialised?
+            if (scene && createCamera) {
+                camera = Engine.create.camera(scene);
+            }
+        }
+    }
+
+    let group = {
+        scene,
+        canvas,
+        engine,
+        camera
+    };
+
+    // TODO: Add the ability to disable this code through kwargs
+    // Set the group in the group-server (so that other areas of code can call B.group.get)
+    set(group);
+
+    return group;
 };
+
+
 
 export default {
-	get,
-	set
+    get,
+    set,
+    create
 };
