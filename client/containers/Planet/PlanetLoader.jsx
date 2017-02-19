@@ -34,6 +34,7 @@ async function loadTerrain(loadingScreen, planetData, textures) {
 
         let terrain = new Terrain({
             load: false,
+            nLevels: 2,
             defines: {
                 ELEVATION: 1024,
             },

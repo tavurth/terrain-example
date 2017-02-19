@@ -108,7 +108,7 @@ float getClip(vec2 p) {
         clip     = 1.0 - clamp(p.x / CLIP_EDGE, 0.0, 1.0);
         toReturn = max(clip, toReturn);
     }
-    if (clipSideMatches(CLIP_DN) && p.y <= CLIP_EDGE * 2.) {
+    if (clipSideMatches(CLIP_DN) && p.y <= CLIP_EDGE) {
         clip     = 1.0 - clamp(p.y / CLIP_EDGE, 0.0, 1.0);
         toReturn = max(clip, toReturn);
     }
