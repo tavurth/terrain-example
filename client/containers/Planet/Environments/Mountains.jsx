@@ -120,7 +120,7 @@ void main() {
     // Mix in snow
     // Caclulate the amount of snow sticking to slopes
     vec3 normal = getNormal();
-    diffuse = mix(diffuse, snow, smoothstep(snowLevel, snowLevel * 1.4, vElevation) * smoothstep(0.7, 0.95, normal.z));
+    diffuse = mix(diffuse, snow, smoothstep(snowLevel, snowLevel * 1.4, vElevation) * smoothstep(0.8, 0.95, normal.z));
 
     // Add the point light
     normal = getNormal();
@@ -129,7 +129,7 @@ void main() {
     diffuse = mix(mix(vec3(0.1), diffuse, 0.3), diffuse * 2.8, incidence);
 
     float depth = gl_FragCoord.z / gl_FragCoord.w;
-    float fogAmount = smoothstep(WORLD_SIZE_X / 1.8 * (vElevation / elevation), WORLD_SIZE_X / 1.4, depth);
+    float fogAmount = smoothstep(WORLD_SIZE_X / 1.8 * (vElevation / ELEVATION), WORLD_SIZE_X / 1.4, depth);
     diffuse = mix(diffuse, vec3(0.5, 0.6, 0.95), fogAmount);
 
     if (debug) {
@@ -146,23 +146,19 @@ void main() {
 
 export default function(terrainData, textures) {
 
-    let elevation = terrainData.elevation;
+    let elevation = parseInt(terrainData.defines.ELEVATION);
 
     return {
         material: {
-            // wireframe: true,
             extensions: {
                 derivatives: true
             },
             uniforms: {
-                light:        { type: 'v3', value: terrainData.light.position },
-                elevation:    { type: 'f',  value: elevation },
-                snowLevel:    { type: 'f',  value: elevation * 0.18 },
+                snowLevel:    { type: 'f',  value: elevation * 0.28 },
                 stoneLevel:   { type: 'f',  value: elevation * 0.35 },
-                grassLevel:   { type: 'f',  value: elevation * 0.18 },
-                waterLevel:   { type: 'f',  value: elevation * 0.09 },
-                grass01:      { type: 't',  value: textures['grass01'] },
-                stone01:      { type: 't',  value: textures['stone01'] },
+                grassLevel:   { type: 'f',  value: elevation * 0.28 },
+                waterLevel:   { type: 'f',  value: elevation * 0.00 },
+                light:        { type: 'v3', value: terrainData.uniforms.light.position },
             },
             vertexShader: vShader,
             fragmentShader: fShader

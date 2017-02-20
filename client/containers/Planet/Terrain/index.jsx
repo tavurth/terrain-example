@@ -62,6 +62,15 @@ class Terrain extends THREE.Object3D {
                 console.warn("You have not specified a heightmap texture, without this your terrain will be flat");
             }
         }
+        // Remove standard uniforms format if it's available
+        // (We'll add it again later, this is to ensure uniform variable types throughout execution)
+        if (options.material.uniforms.heightmap && options.material.uniforms.heightmap.type == 't') {
+            options.material.uniforms.heightmap = options.material.heightmap.value;
+        }
+        // Same thing for the terrain texture
+        if (options.material.uniforms.texture && options.material.uniforms.texture.type == 't') {
+            options.material.uniforms.texture = options.material.texture.value;
+        }
 
         // Functions used to keep track of the loading process
         // Initialise these to receive callbacks
@@ -242,12 +251,11 @@ class Terrain extends THREE.Object3D {
                 ...node.defines
             },
         };
-
-        // console.log(terrainShader);
         let toReturn = new THREE.Mesh(this.planeGeometry, this.renderShader.clone(node));
 
         // Add a name for use with debugging tools (THREE.js inspector)
         toReturn.name = 'TerrainNode x:' + Math.floor(node.uniforms.nodePosition.x) + ' y:' + Math.floor(node.uniforms.nodePosition.y);
+        toReturn.type = 'TerrainNode';
 
         // Prevent frustrum culling of nodes which are close to the camera
         toReturn.frustumCulled = true;

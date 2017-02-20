@@ -6,8 +6,6 @@ import Terrain from './Terrain'
 import Utils from 'modules/Utils'
 import Engine from 'modules/Engine'
 
-import Mountains from './Environments/Mountains'
-
 async function loadTextures(loadingScreen, planetData) {
     let textures      = {};
     let textureLoader = new THREE.TextureLoader();
@@ -25,50 +23,25 @@ async function loadTextures(loadingScreen, planetData) {
 async function loadTerrain(loadingScreen, planetData, textures) {
     return new Promise((res, rej) => {
 
-        let geo = new THREE.SphereGeometry(1, 1, 1);
-        let mat = new THREE.MeshStandardMaterial();
+        let textureUniforms = {};
 
-        let light = new THREE.Mesh(geo, mat);
-        let rotation = 0;
-        light.position.fromArray([ 0, 0, 4096 * 4]);
+        // Setup each texture as a texture uniform to pass into the terrain material shader
+        for (let tex in textures) {
+            textureUniforms[tex] = { type: 't', value: textures[tex] };
+        }
+        textureUniforms['texture'] = textures['texture'];
+        textureUniforms['heightmap'] = textures['heightmap'];
 
+        // Creating our terrain
         let terrain = new Terrain({
-            load: false,
-            nLevels: 2,
-            defines: {
-                ELEVATION: 1024,
-            },
+            load: false, // We'll load using the *LoadingScreen* class at a later time
+            nLevels: 2,  // How detailed the users viewport is
             uniforms: {
-                texture: textures['heightmap'],
-                heightmap: textures['heightmap'],
+                ...planetData.uniforms,
+                ...textureUniforms
             },
-            ...Mountains({
-                light: light,
-                elevation: 1024
-            }, textures),
+            ...planetData.terrain
         });
-        terrain.add(light);
-
-        let stopped = false;
-        let updateLight = () => {
-
-            if (stopped)
-                return;
-            rotation += 0.005;
-
-            light.position.copy({
-                x: terrain.worldSize / 2 + Math.cos(rotation) * terrain.worldSize / 2,
-                y: terrain.worldSize / 2 + Math.sin(rotation) * terrain.worldSize / 2,
-                z: (Math.sin(rotation) + 2.0) * terrain.elevation
-            });
-        };
-
-        window.addEventListener('keydown', event => {
-            if (event.code == 'Space')
-                stopped = ! stopped;
-        });
-
-        Engine.register(updateLight);
 
         loadingScreen.setup(terrain, () => res(terrain), rej);
         terrain.load();

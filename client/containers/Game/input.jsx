@@ -27,11 +27,11 @@ let onPan = event => {
 };
 
 let onPinch = event => {
-    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 20, planet.terrain.elevation * 20), 1200);
+    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 20, planet.terrain.elevation * 4), 1200);
 };
 
 let onScroll = event => {
-    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 40, planet.terrain.elevation * 20), 1200);
+    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 40, planet.terrain.elevation * 4), 1200);
 };
 
 let onKeyDown = event => {

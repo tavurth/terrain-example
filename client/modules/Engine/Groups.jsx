@@ -44,12 +44,9 @@ let setup = (group) => {
         }
 
         if (group.uid == currentGroup.uid) {
-            console.log('Removing group', group.uid);
             currentGroup = false;
         }
     }
-
-    console.log(group);
 };
 
 let create = (canvasId, createCamera = true) => {
