@@ -104,15 +104,15 @@ void main() {
     stone = mix(stone, mix(noise1, noise3, 0.2), 0.4);
 
     vec3 grass  = multisample(grass01, vUv);
-    grass = mix(grass, noise3 / 2. + noise1 / 100., 0.2);
+    grass = mix(grass, noise3 / 2. + noise1 / 10., 0.2);
 
     vec3 diffuse = stone;
 
-    // Mix sandy grass
-    diffuse = mix(diffuse, mix(grass, vec3(0.4,0.3,0.01), 0.3), smoothstep(waterLevel, grassLevel-0.08, vElevation));
-
     // Mix grass
-    diffuse = mix(diffuse, grass, smoothstep(grassLevel-0.08, grassLevel, vElevation));
+    diffuse = mix(diffuse, grass, smoothstep(waterLevel, grassLevel, vElevation));
+
+    // Mix sandy grass
+    diffuse = mix(diffuse, mix(grass, vec3(0.4,0.3,0.01), 0.3), smoothstep(stoneLevel-0.12, stoneLevel, vElevation));
 
     // Mix stone
     diffuse = mix(diffuse, stone, smoothstep(grassLevel, stoneLevel, vElevation));
@@ -150,6 +150,7 @@ export default function(terrainData, textures) {
 
     return {
         material: {
+            ...terrainData,
             extensions: {
                 derivatives: true
             },

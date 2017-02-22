@@ -27,19 +27,30 @@ let onPan = event => {
 };
 
 let onPinch = event => {
-    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 20, planet.terrain.elevation * 4), 1200);
+    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 20, planet.terrain.elevation * 24), 1200);
 };
 
 let onScroll = event => {
-    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 40, planet.terrain.elevation * 4), 1200);
+    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 40, planet.terrain.elevation * 24), 1200);
 };
 
 let onKeyDown = event => {
     switch (event.code) {
-        case 'ArrowUp':    group.camera.velocity.y += 200; break;
-        case 'ArrowDown':  group.camera.velocity.y -= 200; break;
-        case 'ArrowLeft':  group.camera.velocity.x -= 200; break;
-        case 'ArrowRight': group.camera.velocity.x += 200; break;
+        case 'ArrowUp':
+            group.camera.rVelocity.x -= 0.002;
+            break;
+
+        case 'ArrowDown':
+            group.camera.rVelocity.x += 0.002;
+            break;
+
+        case 'ArrowLeft':
+            group.camera.rVelocity.y -= .002;
+            break;
+
+        case 'ArrowRight':
+            group.camera.rVelocity.y += .002;
+            break;
     }
 };
 

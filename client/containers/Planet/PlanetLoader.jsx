@@ -6,17 +6,58 @@ import Terrain from './Terrain'
 import Utils from 'modules/Utils'
 import Engine from 'modules/Engine'
 
-async function loadTextures(loadingScreen, planetData) {
-    let textures      = {};
-    let textureLoader = new THREE.TextureLoader();
+async function loadModelSet(models, modelLoader, loadingScreen, modelSet) {
+
+    Object.keys(modelSet).map(key => {
+        console.log('Loading model set', key);
+
+        modelLoader.load(modelSet[key]).then(item => models[key] = item);
+    });
+}
+
+async function loadModels(loadingScreen, planetData) {
+    let modelLoader = new THREE.OBJLoader();
+    let models = {};
 
     return new Promise((res, rej) => {
+        loadingScreen.setup(modelLoader.manager, () => res(models), rej);
+        loadModelSet(models, modelLoader, loadingScreen, planetData.models);
+    });
+}
 
+async function loadTextureSet(textures, textureLoader, loadingScreen, textureSet) {
+    Object.keys(textureSet).map(key => {
+
+        // We've found a subset of textures to load
+        if (typeof textureSet[key] == 'object') {
+            console.log('Loading texture set', key);
+
+            // Make sure we've made some space for the subset
+            if (! textures[key]) {
+                textures[key] = {};
+            }
+
+            // Load the subset recursively
+            let subSet = loadTextureSet(textures[key], textureLoader, loadingScreen, textureSet[key]);
+
+            // Skip normal processing
+            return;
+        }
+
+        // Load the texture into the base level
+        else if (typeof textureSet[key] == 'string') {
+            textures[key] = textureLoader.load(textureSet[key]);
+        }
+    });
+}
+
+async function loadTextures(loadingScreen, planetData) {
+    let textureLoader = new THREE.TextureLoader();
+    let textures = {};
+
+    return new Promise((res, rej) => {
         loadingScreen.setup(textureLoader.manager, () => res(textures), rej);
-
-        Object.keys(planetData.textures).map(key => {
-            textures[key] = textureLoader.load(planetData.textures[key]);
-        });
+        loadTextureSet(textures, textureLoader, loadingScreen, planetData.textures);
     });
 };
 
@@ -26,11 +67,11 @@ async function loadTerrain(loadingScreen, planetData, textures) {
         let textureUniforms = {};
 
         // Setup each texture as a texture uniform to pass into the terrain material shader
-        for (let tex in textures) {
-            textureUniforms[tex] = { type: 't', value: textures[tex] };
+        for (let tex in textures.terrain) {
+            textureUniforms[tex] = { type: 't', value: textures.terrain[tex] };
         }
-        textureUniforms['texture'] = textures['texture'];
-        textureUniforms['heightmap'] = textures['heightmap'];
+        textureUniforms['texture'] = textures.terrain['texture'];
+        textureUniforms['heightmap'] = textures.terrain['heightmap'];
 
         // Creating our terrain
         let terrain = new Terrain({
@@ -52,11 +93,12 @@ async function load(planetData) {
     let loadingScreen = new Engine.LoadingScreen();
 
     // Load data which may take a while
+    let models   = await loadModels(loadingScreen, planetData);
     let textures = await loadTextures(loadingScreen, planetData);
     let terrain  = await loadTerrain(loadingScreen, planetData, textures);
 
     // Create our planet from the data
-    let planet   = new Planet(terrain);
+    let planet   = new Planet(terrain, models, textures);
 
     // Cleanup the loading screen
     loadingScreen.doneLoading();

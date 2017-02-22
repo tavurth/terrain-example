@@ -124,15 +124,15 @@ module.exports = function (env) {
             inline: !isProd,
             hot: !isProd,
             stats: {
-                assets: true,
+                assets: false,
                 children: false,
                 chunks: false,
                 hash: false,
                 modules: false,
                 publicPath: false,
-                timings: true,
+                timings: false,
                 version: false,
-                warnings: true,
+                warnings: false,
                 colors: {
                     green: '\u001b[32m'
                 }

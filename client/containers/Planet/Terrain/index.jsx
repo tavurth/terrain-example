@@ -41,8 +41,10 @@ class Terrain extends THREE.Object3D {
             // Material, will be built later from options.defines and options.uniforms,
             // but we can pass material specific options here also
             material: {
+                depthTest: true,
+                depthWrite: true,
                 wireframe: false,
-                transparent: true,
+                transparent: false,
                 ...(options.material || {}),  // Include user material
             },
 
@@ -277,7 +279,8 @@ class Terrain extends THREE.Object3D {
             let nI = this.children.length;
 
             while (nI--) {
-                this.children[nI].geometry.boundingSphere.center.copy(this.position);
+                if (this.children[nI].geometry && this.children[nI].geometry.boundingSphere)
+                    this.children[nI].geometry.boundingSphere.center.copy(this.position);
             }
             this.updateBoundingSpheres = 0;
         }
@@ -290,13 +293,14 @@ class Terrain extends THREE.Object3D {
      * You will find this useful later when you want to get the elevation at specific coordinates
      */
     initializeHeightmap() {
-        if (! this.heightmap) {
+        if (! this.uniforms.heightmap) {
+            throw "Oh shit";
             return;
         }
         let heightmap, tempCanvas, tempContext, heightData;
 
         // Get the real location of the height information
-        heightmap = this.heightmap.image || this.heightmap.texture || this.heightmap;
+        heightmap = this.uniforms.heightmap.image; // .image || this.heightmap.texture || this.heightmap;
 
         // Create a temp canvas of the width and height, we'll write here to then retrieve the data
         tempCanvas = document.createElement('canvas');
@@ -371,7 +375,7 @@ class Terrain extends THREE.Object3D {
     getElevation(x, y) {
 
         let xPos = Math.floor((x / this.defines.WORLD_SIZE_X) * this.heightData.length);
-        let yPos = Math.floor((y / this.defines.WORLD_SIZE_Y) * this.heightData[0].length);
+        let yPos = Math.floor((y / this.defines.WORLD_SIZE_Y) * this.heightData.length);
 
         // We'll just attempt to get the current position as elevation
         // If we fail, due to texture wrapping, don't let the caller see heights
