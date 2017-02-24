@@ -14,11 +14,6 @@ export async function run(canvasId) {
 
     let planet = await Island.load();
 
-    let plane = planet.plane;
-
-    group.camera.position.x = planet.terrain.worldSize;
-    group.camera.position.y = planet.terrain.worldSize * 0.5;
-    group.camera.position.z = planet.terrain.elevation * 2;
     group.scene.add(planet);
 
     Input.init(planet);

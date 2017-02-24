@@ -2,6 +2,8 @@ import Engine from 'modules/Engine'
 
 let vShader = `
 
+uniform vec3 light;
+
 varying vec2  vUv2;
 varying vec3  vPosition;
 varying float vDistance;
@@ -22,7 +24,6 @@ void main() {
 `;
 
 let fShader = Engine.noise('classic2D') + `
-
 varying vec2 vUv2;
 varying vec3  vPosition;
 varying float vDistance;
@@ -124,9 +125,10 @@ void main() {
 
     // Add the point light
     normal = getNormal();
-    float incidence = dot(normalize(light), normal);
+    vec3 vLightOffset = vPosition + nodePosition + cPosition - light;
+    float incidence = dot(normal, -normalize(vLightOffset));
     incidence = clamp(incidence, 0., 1.);
-    diffuse = mix(mix(vec3(0.1), diffuse, 0.3), diffuse * 2.8, incidence);
+    diffuse = mix(mix(vec3(0.1), diffuse, 0.3), diffuse * 1.8, incidence);
 
     float depth = gl_FragCoord.z / gl_FragCoord.w;
     float fogAmount = smoothstep(WORLD_SIZE_X / 1.8 * (vElevation / ELEVATION), WORLD_SIZE_X / 1.4, depth);
@@ -141,8 +143,7 @@ void main() {
             diffuse.r *= 1. + (1.- 0.01 - vUv2.y);
     }
     gl_FragColor = vec4(diffuse, 1.);
-}
-`;
+}`;
 
 export default function(terrainData, textures) {
 

@@ -58,19 +58,6 @@ vec3 getPosition(vec3 cPosition) {
 }
 `;
 
-let initialize = `
-/**
- * Initialize variables, translating the vertex position and calculating elevation
- * This function should be called at the beginning of your vertex shader
- */
-void initialize() {
-    _vPosition = clipSides(getPosition(cPosition));
-    _vElevation = getElevation(heightmap, _vPosition);
-
-    _vPosition.z = _vElevation;
-}
-`;
-
 let clipSides = `
 /**
  * Returns true or false if the current nodeEdge matches the passed edge bitmask
@@ -146,7 +133,21 @@ vec3 clipSides(vec3 p) {
     // the two parent meshes
     return mix(p, p2, _vClipFactor);
 }
-`
+`;
+
+let initialize = `
+/**
+ * Initialize variables, translating the vertex position and calculating elevation
+ * This function should be called at the beginning of your vertex shader
+ */
+void initialize() {
+    _vPosition = clipSides(getPosition(cPosition));
+    _vElevation = getElevation(heightmap, _vPosition);
+
+    _vPosition.z = _vElevation;
+}
+`;
+
 // precision highp int;
 // precision highp float;
 // uniform mat4 modelViewMatrix;

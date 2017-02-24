@@ -22,36 +22,68 @@ let onResize = () => {
 };
 
 let onPan = event => {
+    if (! group.player)
+        return;
+
     group.camera.velocity.x -= event.deltaX / 8.;
     group.camera.velocity.y += event.deltaY / 8.;
 };
 
 let onPinch = event => {
-    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 20, planet.terrain.elevation * 24), 1200);
+    if (! group.player)
+        return;
+
+    group.player.position.z = Math.max(Math.min(group.player.position.z + event.deltaY * 20, planet.terrain.elevation * 24), 1200);
 };
 
 let onScroll = event => {
-    group.camera.position.z = Math.max(Math.min(group.camera.position.z + event.deltaY * 40, planet.terrain.elevation * 24), 1200);
+    if (! group.player)
+        return;
+
+    group.player.position.z = Math.max(Math.min(group.player.position.z + event.deltaY * 40, planet.terrain.elevation * 24), 1200);
 };
 
-let onKeyDown = event => {
-    switch (event.code) {
-        case 'ArrowUp':
-            group.camera.rVelocity.x -= 0.002;
-            break;
+let keysPressed = {};
+let onKeyDown, onKeyUp;
+onKeyDown = onKeyUp = e => {
+    e = e || event; // Deal with IE
+    keysPressed[e.code] = e.type == 'keydown';
+}
 
-        case 'ArrowDown':
-            group.camera.rVelocity.x += 0.002;
-            break;
+let velocityInc = 0.0002;
+let keyRepeater = () => {
 
-        case 'ArrowLeft':
-            group.camera.rVelocity.y -= .002;
-            break;
+    if (! group.player)
+        return;
 
-        case 'ArrowRight':
-            group.camera.rVelocity.y += .002;
-            break;
-    }
+    Object.keys(keysPressed).map(key => {
+        if (! keysPressed[key])
+            return;
+
+        switch (key) {
+            case 'ArrowUp':
+                group.player.rVelocity.x -= velocityInc;
+                break;
+
+            case 'ArrowDown':
+                group.player.rVelocity.x += velocityInc;
+                break;
+
+            case 'ArrowLeft':
+                group.player.rVelocity.z += velocityInc;
+                break;
+
+            case 'ArrowRight':
+                group.player.rVelocity.z -= velocityInc;
+                break;
+        }
+    });
+};
+
+let movePlayer = () => {
+    group.player.position.z += group.player.rVelocity.y * 10;
+    group.player.position.y += group.player.rVelocity.z * 10;
+    group.player.position.x += group.player.rVelocity.x * 10;
 };
 
 let mouse = () => {
@@ -64,17 +96,17 @@ let mouse = () => {
 }
 
 let keyboard = () => {
+    window.addEventListener('keyup', onKeyUp);
     window.addEventListener('keydown', onKeyDown);
+
+    Engine.register(keyRepeater);
+    Engine.register(movePlayer);
 }
 
 let init = currentPlanet => {
 
     group  = Engine.group.get();
     planet = currentPlanet;
-
-    Engine.register(() => {
-        planet.animate(group.camera);
-    }, 'render');
 
     global();
     mouse();

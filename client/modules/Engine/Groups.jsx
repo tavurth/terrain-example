@@ -47,6 +47,19 @@ let setup = (group) => {
             currentGroup = false;
         }
     }
+
+    group.player    = false;
+    group.setPlayer = (playerModel) => {
+        group.player = {
+            ...playerModel,
+            velocity: new THREE.Vector3(),
+            rVelocity: new THREE.Vector3(),
+        };
+
+        if (! group.hasOwnProperty('position')) {
+            group.position = new THREE.Vector3();
+        }
+    };
 };
 
 let create = (canvasId, createCamera = true) => {

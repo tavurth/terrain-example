@@ -17,7 +17,6 @@ export async function load(textures) {
     // Setup the light
     let rotation = 0;
     let light = new THREE.PointLight(0x8899AA, 2, 8000000);
-    light.position.fromArray([ 0, 0, 380000]);
 
     let elevation = '2800.';
 
@@ -101,9 +100,9 @@ export async function load(textures) {
         rotation += 0.005;
 
         light.position.copy({
-            x: planet.terrain.worldSize + Math.cos(rotation) * planet.terrain.worldSize / 2,
-            y: planet.terrain.worldSize + Math.sin(rotation) * planet.terrain.worldSize / 2,
-            z: (Math.sin(rotation) + 2.0) * planet.terrain.elevation
+            x: planet.terrain.worldSize + Math.cos(rotation) * planet.terrain.worldSize,
+            y: planet.terrain.worldSize + Math.sin(rotation) * planet.terrain.worldSize,
+            z: planet.terrain.elevation // (Math.sin(rotation) + 2.0) * planet.terrain.elevation / 4
         });
 
     };
@@ -135,15 +134,18 @@ export async function load(textures) {
     });
     planet.terrain.add(clouds);
 
+    // Add the plane to the scene
     let group = Engine.group.get();
     let plane = planet.models['plane'];
-    planet.plane = plane;
 
-    group.camera.add(plane);
-    plane.position.x = 0;
-    plane.position.z = -200;
-    plane.position.y = -50;
-    plane.rotation.x = Math.PI / 3.5;
+    group.scene.add(plane);
+    group.setPlayer(plane);
+
+    // Setting up the position of the camera
+    plane.position.x = planet.terrain.worldSize;
+    plane.position.y = planet.terrain.worldSize;
+    plane.position.z = planet.terrain.elevation * 2;
+    plane.rotation.x = Math.PI / 2;
 
     plane.scale.set(0.1,0.1,0.1);
     plane.material = new THREE.MeshPhongMaterial({
@@ -151,6 +153,31 @@ export async function load(textures) {
         emissive: 0xffffff,
         depthTest: false,
     });
+
+    Engine.register(() => {
+        if (! group.player)
+            return;
+
+        group.player.position.x += group.player.velocity.x /= 1.15;
+        group.player.position.y += group.player.velocity.y /= 1.15;
+
+        group.player.rotation.z += group.player.rVelocity.z /= 1.05;
+        group.player.rotation.y += group.player.rVelocity.y /= 1.05;
+        group.player.rotation.x += group.player.rVelocity.x /= 1.05;
+
+        // group.player.position.y += 10;
+
+        group.camera.position.copy(group.player.position);
+        // group.camera.position.y += 50;
+        group.camera.position.z += 200;
+
+        group.camera.lookAt(plane.position);
+        // console.log(group.camera.position);
+    })
+
+    Engine.register(() => {
+        planet.animate(group.camera);
+    }, 'render');
 
     group.camera.rotation.x = Math.PI / 4.5;
 
