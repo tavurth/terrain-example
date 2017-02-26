@@ -11,7 +11,11 @@ class Planet extends THREE.Object3D {
 
         this.models = models;
         this.textures = textures;
-        this.terrain = (! terrain instanceof Terrain) ? terrain : new Terrain(terrain);
+        this.terrain = terrain;
+
+        if (! terrain instanceof Terrain)
+            this.terrain = new Terrain(terrain);
+
         this.add(this.terrain);
     }
 
@@ -28,8 +32,8 @@ class Planet extends THREE.Object3D {
         })
     }
 
-    animate(camera) {
-        this.terrain.animate(camera);
+    animate(offset) {
+        this.terrain.animate(offset);
     }
 
     static async load(planetData) {

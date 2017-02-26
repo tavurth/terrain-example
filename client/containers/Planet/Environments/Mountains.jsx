@@ -76,9 +76,9 @@ vec3 getNormal() {
     vec3 p2 = vPosition + vDelta2;
 
     // Now get the height at those points
-    p0.z = getElevation(heightmap, p0);
-    p1.z = getElevation(heightmap, p1);
-    p2.z = getElevation(heightmap, p2);
+    p0.z = getElevation(heightmap, p0, true);
+    p1.z = getElevation(heightmap, p1, true);
+    p2.z = getElevation(heightmap, p2, true);
 
     return normalize(cross(p2 - p0, p1 - p0));
 }
@@ -121,7 +121,7 @@ void main() {
     // Mix in snow
     // Caclulate the amount of snow sticking to slopes
     vec3 normal = getNormal();
-    diffuse = mix(diffuse, snow, smoothstep(snowLevel, snowLevel * 1.4, vElevation) * smoothstep(0.8, 0.95, normal.z));
+    diffuse = mix(diffuse, snow, smoothstep(snowLevel, snowLevel * 1.4, vElevation) * smoothstep(0.5, 0.95, normal.z));
 
     // Add the point light
     normal = getNormal();
@@ -131,7 +131,7 @@ void main() {
     diffuse = mix(mix(vec3(0.1), diffuse, 0.3), diffuse * 1.8, incidence);
 
     float depth = gl_FragCoord.z / gl_FragCoord.w;
-    float fogAmount = smoothstep(WORLD_SIZE_X / 1.8 * (vElevation / ELEVATION), WORLD_SIZE_X / 1.4, depth);
+    float fogAmount = smoothstep(WORLD_SIZE_X * (vElevation / ELEVATION), WORLD_SIZE_X * 3., depth);
     diffuse = mix(diffuse, vec3(0.5, 0.6, 0.95), fogAmount);
 
     if (debug) {
@@ -147,7 +147,7 @@ void main() {
 
 export default function(terrainData, textures) {
 
-    let elevation = parseInt(terrainData.defines.ELEVATION);
+    let elevation = parseInt(terrainData.defines.ELEVATION) / 2.;
 
     return {
         material: {
@@ -157,8 +157,8 @@ export default function(terrainData, textures) {
             },
             uniforms: {
                 snowLevel:    { type: 'f',  value: elevation * 0.28 },
-                stoneLevel:   { type: 'f',  value: elevation * 0.35 },
-                grassLevel:   { type: 'f',  value: elevation * 0.28 },
+                stoneLevel:   { type: 'f',  value: elevation * 0.25 },
+                grassLevel:   { type: 'f',  value: elevation * 0.08 },
                 waterLevel:   { type: 'f',  value: elevation * 0.00 },
                 light:        { type: 'v3', value: terrainData.uniforms.light.position },
             },

@@ -31,11 +31,10 @@ let createBasic = {
     },
 
     camera: (scene, position = vector3(0, 0, 0)) => {
-        let camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 100, 120000);
+        let camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1000, 1200000);
 
         camera.velocity  = new THREE.Vector3();
         camera.rVelocity = new THREE.Vector3();
-        scene.add(camera);
 
         return camera;
     },

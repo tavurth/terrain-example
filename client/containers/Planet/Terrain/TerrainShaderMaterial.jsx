@@ -28,9 +28,23 @@ let getElevation = `
  *  sampler2D sample => The texture from which to sample height data
  *  vec3 p           => The translated position of the current vertex
  */
+
+#define aDeltaE 0.99
+#define bDeltaE 1.01
+
 float getElevation(sampler2D sample, vec3 p) {
     vec2 uv = getUv(p);
     vec4 d = texture2D(sample, uv);
+    return ((d.x + d.y + d.z) / 3.0) * ELEVATION;
+}
+
+float getElevation(sampler2D sample, vec3 p, bool multisample) {
+    vec2 uv = getUv(p);
+    vec4 d = texture2D(sample, uv);
+    d = mix(d, texture2D(sample, vec2(uv.x * aDeltaE, uv.y * aDeltaE)), uv.y);
+    d = mix(d, texture2D(sample, vec2(uv.x * bDeltaE, uv.y * aDeltaE)), uv.y);
+    d = mix(d, texture2D(sample, vec2(uv.x * bDeltaE, uv.y * bDeltaE)), uv.x);
+    d = mix(d, texture2D(sample, vec2(uv.x * aDeltaE, uv.y * bDeltaE)), uv.x);
     return ((d.x + d.y + d.z) / 3.0) * ELEVATION;
 }
 `;

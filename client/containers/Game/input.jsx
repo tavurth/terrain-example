@@ -33,14 +33,14 @@ let onPinch = event => {
     if (! group.player)
         return;
 
-    group.player.position.z = Math.max(Math.min(group.player.position.z + event.deltaY * 20, planet.terrain.elevation * 24), 1200);
+    group.player.position.z = Math.max(Math.min(group.player.position.z + event.deltaY * 20, planet.terrain.elevation * 24), 140);
 };
 
 let onScroll = event => {
     if (! group.player)
         return;
 
-    group.player.position.z = Math.max(Math.min(group.player.position.z + event.deltaY * 40, planet.terrain.elevation * 24), 1200);
+    group.player.position.z = Math.max(Math.min(group.player.position.z + event.deltaY * 40, planet.terrain.elevation * 24), 140);
 };
 
 let keysPressed = {};
@@ -50,7 +50,7 @@ onKeyDown = onKeyUp = e => {
     keysPressed[e.code] = e.type == 'keydown';
 }
 
-let velocityInc = 0.0002;
+let velocityInc = 0.002;
 let keyRepeater = () => {
 
     if (! group.player)
@@ -76,6 +76,14 @@ let keyRepeater = () => {
             case 'ArrowRight':
                 group.player.rVelocity.z -= velocityInc;
                 break;
+
+            case 'KeyZ':
+                group.player.rVelocity.y += velocityInc;
+                break;
+
+            case 'KeyX':
+                group.player.rVelocity.y -= velocityInc;
+                break;
         }
     });
 };
@@ -96,11 +104,11 @@ let mouse = () => {
 }
 
 let keyboard = () => {
-    window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('keydown', onKeyDown);
-
-    Engine.register(keyRepeater);
-    Engine.register(movePlayer);
+    // window.addEventListener('keyup', onKeyUp);
+    // window.addEventListener('keydown', onKeyDown);
+    //
+    // Engine.register(keyRepeater);
+    // Engine.register(movePlayer);
 }
 
 let init = currentPlanet => {

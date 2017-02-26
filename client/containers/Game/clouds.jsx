@@ -20,7 +20,6 @@ attribute vec3 translate; // Vertex position
 // Pass to fragment
 varying vec2  vUv;
 varying float randomChoice;
-varying float vDistance;
 
 float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
@@ -47,7 +46,6 @@ void main() {
     scale           = (scale * 100.0) + size * 10.;
     mvPosition.xy  += position.xy * scale * rand(translate.xy) * 2.;
 
-    vDistance = distance(translate, cameraPosition);
 
     gl_Position = projectionMatrix * mvPosition;
 }
@@ -65,7 +63,6 @@ uniform sampler2D cloud03;
 // Texture coordinates for current scale
 varying vec2  vUv;     // Current position of pixel
 varying float randomChoice;
-varying float vDistance;
 
 float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
@@ -75,14 +72,11 @@ void main() {
     vec4 diffuse;
     vec2 flippedUv = vUv;
 
-    //if (vDistance < 80000.)
-        //discard;
-
     if (fract(randomChoice) > 0.5) {
         flippedUv = -flippedUv;
     }
 
-    if (randomChoice > 1.) {
+    if (true || randomChoice > 1.) {
         diffuse = texture2D(cloud01, flippedUv);
     }
     else if (randomChoice > 1.) {
@@ -93,7 +87,7 @@ void main() {
     }
 
     // if (diffuse.w < 0.5)
-        // discard;
+    // discard;
 
     gl_FragColor = diffuse;
 }
@@ -134,10 +128,15 @@ let create = (options = {}) => {
     }
 
     let material = new THREE.ShaderMaterial({
+        // lights: true,
+        transparent: true,
         depthTest: true,
         depthWrite: false,
-        transparent: true,
-        // blending: THREE.AdditiveBlending,
+
+        // Alpha blending
+        // blending: THREE.MultiplyBlending,
+
+        // Shader
         vertexShader: vertexShader,
         fragmentShader: fragmentShader,
         uniforms: {
@@ -160,8 +159,8 @@ let create = (options = {}) => {
 
         // Find the centre of this cloud position
         chunkX = options.width  * Math.random() - options.halfWidth;
-        chunkY = options.depth  * Math.random();
-        chunkZ = options.height * Math.random() - options.halfHeight;
+        chunkY = options.height * Math.random() - options.halfHeight;
+        chunkZ = options.depth  * Math.random();
 
         chunkSkewX = Math.random() * options.blockSize - options.blockSize / 2;
         chunkSkewY = Math.random() * options.blockSize - options.blockSize / 2;
@@ -170,8 +169,8 @@ let create = (options = {}) => {
         // Add a single chunk to the cloud
         for (let j = 0; j < Math.floor(Math.random() * options.maxChunks) + options.minChunks; j++, i+=3) {
             translateArray[i + 0] = chunkX + Math.random() * options.blockSize + chunkSkewX;
-            translateArray[i + 1] = chunkY + Math.random() * options.blockSize + chunkSkewY;
-            translateArray[i + 2] = chunkZ + Math.random() * options.blockSize + chunkSkewZ;
+            translateArray[i + 2] = chunkY + Math.random() * options.blockSize + chunkSkewY;
+            translateArray[i + 1] = chunkZ + Math.random() * options.blockSize + chunkSkewZ;
         }
     }
     // throw translateArray
@@ -190,7 +189,6 @@ let create = (options = {}) => {
     // Called once every frame
     // Causes the spores to move with wind or current
     let renderCallback = () => {
-
         material.uniforms.time.value = performance.now() * 0.00005;
     };
 

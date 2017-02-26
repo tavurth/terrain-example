@@ -19,14 +19,14 @@ uniform float resolution;
 
 void main() {
 
-    vec4 color = vec4(smoothstep(-.5, vPosition.x / resolution, loadedPct - 0.7));
+    vec4 color = vec4(smoothstep(-.5, vPosition.x / resolution, loadedPct - 0.75));
 
+    // Move down the screen
     color = mix(vec4(0.0), color, step(-.48, vPosition.y / resolution) - step(-.45, vPosition.y / resolution));
     color = mix(vec4(0.0), color, step(-.48, vPosition.x / resolution) - step(.48, vPosition.x / resolution));
 
     gl_FragColor = color;
-}
-`;
+}`;
 
 class LoadingScreen {
     constructor(options = {}) {
@@ -90,13 +90,21 @@ class LoadingScreen {
 
     onProgress(name, loaded, toLoad) {
         this.loadedPct = loaded / toLoad;
+
+        if (loaded >= toLoad) {
+            console.log('loaded!')
+            this.manager.onLoad();
+        }
     }
 
     setup(manager, res, rej) {
+
+        this.manager = manager;
+
         manager.onError    = (error) => rej(error);
         manager.onStart    = (name, loaded, toLoad) => this.onStart(name, loaded, toLoad);
         manager.onProgress = (name, loaded, toLoad) => this.onProgress(name, loaded, toLoad);
-        manager.onLoad     = () => res(/* Items to return are inserted in the calling function */);
+        manager.onLoad     = (...args) => res(...args/* Items to return are inserted in the calling function */);
     }
 
     doneLoading() {

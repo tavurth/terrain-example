@@ -15,6 +15,7 @@ export async function run(canvasId) {
     let planet = await Island.load();
 
     group.scene.add(planet);
+    group.engine.setClearColor(0x4873bd);
 
     Input.init(planet);
     Render.init();

@@ -10,17 +10,31 @@ async function loadModelSet(models, modelLoader, loadingScreen, modelSet) {
 
     Object.keys(modelSet).map(key => {
         console.log('Loading model set', key);
-
-        modelLoader.load(modelSet[key]).then(item => models[key] = item);
+        modelLoader.load(key, modelSet[key]);
+        models.count++;
     });
 }
 
 async function loadModels(loadingScreen, planetData) {
     let modelLoader = new THREE.OBJLoader();
-    let models = {};
+    let models = {count: 0};
 
     return new Promise((res, rej) => {
-        loadingScreen.setup(modelLoader.manager, () => res(models), rej);
+
+        let counted = 0;
+        let onLoad = (key, model) => {
+
+            if (key) {
+                models[key] = model;
+
+                if (++counted >= models.count) {
+                    delete models.count;
+                    res(models);
+                }
+            }
+        };
+
+        loadingScreen.setup(modelLoader.manager, onLoad, rej);
         loadModelSet(models, modelLoader, loadingScreen, planetData.models);
     });
 }

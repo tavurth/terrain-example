@@ -47,8 +47,7 @@ class Terrain extends THREE.Object3D {
                 transparent: false,
                 ...(options.material || {}),  // Include user material
             },
-
-            load:           options.load    || true,   // Should we load immediately?
+            load:           options.load,
             nLevels:        options.nLevels || 3,      // Number of rings of nodes to generate
 
             // Send in progress loading functions
@@ -58,12 +57,24 @@ class Terrain extends THREE.Object3D {
             onStart:        options.onStart     || ((name, itemsLoaded, itemsTotal) => {}),
         };
 
+        // Default to auto-loading the terrain without waiting for a specific Terrain.load call
+        if (typeof options.load == 'undefined')
+            options.load = true;
+
         // Check to see if the user has passed in a heightmap
-        if (! options.uniforms.heightmap) {
-            if (options.material.uniforms && ! options.material.uniforms.heightmap) {
-                console.warn("You have not specified a heightmap texture, without this your terrain will be flat");
-            }
+        this.heightmap = false;
+        if (options.uniforms.heightmap) {
+            this.heightmap = options.uniforms.heightmap;
         }
+
+        else if (options.material.uniforms && options.material.uniforms.heightmap) {
+            this.heightmap = options.material.uniforms.heightmap;
+        }
+
+        if (! this.heightmap) {
+            console.warn("You have not specified a heightmap texture, without this your terrain will be flat");
+        }
+
         // Remove standard uniforms format if it's available
         // (We'll add it again later, this is to ensure uniform variable types throughout execution)
         if (options.material.uniforms.heightmap && options.material.uniforms.heightmap.type == 't') {
@@ -110,7 +121,7 @@ class Terrain extends THREE.Object3D {
         this.createSplay();
 
         // Save the heightmap data into an array for later queries
-        // this.initializeHeightmap().then(this.onLoad);
+        this.initializeHeightmap()
         this.onLoad();
     }
 
@@ -145,7 +156,6 @@ class Terrain extends THREE.Object3D {
 
         // Prepare to build a node from current parameters
         let addNode = (x, y, scale) => {
-
             let edge = 0;
 
             // Setting edge masks
@@ -257,7 +267,7 @@ class Terrain extends THREE.Object3D {
 
         // Add a name for use with debugging tools (THREE.js inspector)
         toReturn.name = 'TerrainNode x:' + Math.floor(node.uniforms.nodePosition.x) + ' y:' + Math.floor(node.uniforms.nodePosition.y);
-        toReturn.type = 'TerrainNode';
+        toReturn.terrainNode = true;
 
         // Prevent frustrum culling of nodes which are close to the camera
         toReturn.frustumCulled = true;
@@ -269,9 +279,9 @@ class Terrain extends THREE.Object3D {
         this.add(toReturn);
     }
 
-    animate(camera) {
-        this.position.x = camera.position.x / 2;
-        this.position.y = camera.position.y / 2;
+    animate(offset) {
+        this.position.x = offset.x / 2;
+        this.position.y = offset.y / 2;
 
         // Only update the bounding spheres once every BOUNDING_SPHERE_UPDATE frames
         if (this.updateBoundingSpheres % UPDATE_BOUNDING_SPHERES == 0) {
@@ -279,7 +289,7 @@ class Terrain extends THREE.Object3D {
             let nI = this.children.length;
 
             while (nI--) {
-                if (this.children[nI].geometry && this.children[nI].geometry.boundingSphere)
+                if (this.children[nI].geometry && this.children[nI].geometry.boundingSphere && this.children[nI].terrainNode)
                     this.children[nI].geometry.boundingSphere.center.copy(this.position);
             }
             this.updateBoundingSpheres = 0;
@@ -293,100 +303,61 @@ class Terrain extends THREE.Object3D {
      * You will find this useful later when you want to get the elevation at specific coordinates
      */
     initializeHeightmap() {
-        if (! this.uniforms.heightmap) {
+        if (! this.heightmap) {
             throw "Oh shit";
             return;
         }
         let heightmap, tempCanvas, tempContext, heightData;
 
+        this.onStart('Terrain/CreateHeightmap', 0, 100);
+
         // Get the real location of the height information
-        heightmap = this.uniforms.heightmap.image; // .image || this.heightmap.texture || this.heightmap;
+        heightmap = this.heightmap.image; // .image || this.heightmap.texture || this.heightmap;
 
         // Create a temp canvas of the width and height, we'll write here to then retrieve the data
         tempCanvas = document.createElement('canvas');
         tempCanvas.width  = heightmap.width;
         tempCanvas.height = heightmap.height;
 
-        // Used to keep track of the loading progress
-        let progressPct = 100;
-        this.onStart('Terrain/CreateHeightmap', 0, heightmap.width * heightmap.height * 4);
+        this.onProgress('Terrain/CreateHeightmap', 25, 100);
 
         // draw the image onto the canvas
         tempContext = tempCanvas.getContext("2d");
-        tempContext.drawImage(heightmap, 0, 0, heightmap.width, heightmap.height);
+        tempContext.drawImage(heightmap, 0, 0, tempCanvas.width, tempCanvas.height);
+
+        this.onProgress('Terrain/CreateHeightmap', 50, 100);
 
         // copy the contents of the canvas
-        heightData = tempContext.getImageData(0, 0, heightmap.width, heightmap.height);
+        this.heightData = tempContext.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
 
         // Extract the pixel data count (RGB or RGBA)
-        let rgbCount = (heightData.data.length / (heightData.width * heightData.height));
+        this.heightData.rgb = (this.heightData.data.length / (this.heightData.width * this.heightData.height));
+    }
 
-        let x, y, elev, rgb, pos = 0, toPush = [];
+    positionData(x, y) {
+        // Initialize an empty return array for the position pixel-data
+        let toReturn = new Uint8Array(this.heightData.rgb);
 
-        // First fill the width with new 2D array
-        this.heightData = new Array(heightData.width * heightData.height);
+        // Make sure we don't try to read outside the heightmap texture
+        if (x < 0 || y < 0 || x > this.defines.WORLD_SIZE_X || y > this.defines.WORLD_SIZE_Y) {
+            return toReturn;
+        }
 
-        x   = 0;
-        y   = heightData.height - 1;
-        pos = 0;
+        // First calculate the percentage world position, then normalize to heightdata texture coordinates
+        let xPos = Math.floor((x / this.defines.WORLD_SIZE_X) * this.heightData.width);
+        let yPos = Math.floor((1 - y / this.defines.WORLD_SIZE_Y) * this.heightData.height);
 
-        return new Promise((res, rej) => {
-            // TODO: Look at performance bonus for de-increment loop
-            // We'll use a incrementing while loops to speed things up a bit
-            let loop = () => {
-                while (pos < heightData.data.length - 1) {
-                    rgb  = 3;
-                    elev = 0;
+        // Get the next n {rgb} data values after the point
+        let startPos = xPos * this.heightData.rgb + yPos * this.heightData.width * this.heightData.rgb;
+        for (let i=0; i < this.heightData.rgb; i++) {
+            toReturn[i] = this.heightData.data[startPos + i];
+        }
 
-                    // Add that pixel (x-y-coord) to the current pixel store
-                    elev += heightData.data[pos++];
-                    elev += heightData.data[pos++];
-                    elev += heightData.data[pos++];
-
-                    // Skip the next alpha channel
-                    pos++;
-
-                    this.heightData[x + (y * heightData.width)] = (elev / 765.) * this.elevation;
-
-                    // We've reached the edge of the image
-                    if (++x >= heightData.width) {
-                        x = 0;
-                        y--;
-
-                        // Incremental loading progress for loading screens
-                        if (pos % progressPct == 0) {
-                            this.onProgress('Terrain/CreateHeightmap', pos, heightData.data.length);
-
-                            // Add a timeout so that we render a frame of progress
-                            return setTimeout(loop, 0);
-                        }
-                    }
-                }
-
-                // Finished loading
-                res();
-            }
-
-            // Start the load-loop
-            loop();
-        });
+        return toReturn;
     }
 
     getElevation(x, y) {
-
-        let xPos = Math.floor((x / this.defines.WORLD_SIZE_X) * this.heightData.length);
-        let yPos = Math.floor((y / this.defines.WORLD_SIZE_Y) * this.heightData.length);
-
-        // We'll just attempt to get the current position as elevation
-        // If we fail, due to texture wrapping, don't let the caller see heights
-        try {
-            return this.heightData[xPos][yPos];
-
-        } catch(err) {
-
-            // Somehow, we've wrapped outside the map
-            return 0;
-        }
+        return (this.positionData(x, y).slice(0,3).reduce((a,b) => a+b) / 765) * this.elevation;
     }
 
     dispose(ofTextures = true) {

@@ -17,8 +17,9 @@ export const set = (newGroup) => {
 let setup = (group) => {
     group.renderCallbacks = {};
 
-    // group.stats = new Stats();
-    // group.canvas.appendChild(group.stats.dom);
+    group.stats = new Stats();
+    document.body.appendChild(group.stats.dom);
+
     group.status = 'RUNNING';
     group.uid = Utils.generate_name('Group');
 
@@ -27,7 +28,7 @@ let setup = (group) => {
 
     // Render and perform post render functionality
     group.render = function(name) {
-        // group.stats.update();
+        group.stats.update();
 
         // Call all registered render functions
         Engine.callbacks('render').call();
@@ -50,15 +51,13 @@ let setup = (group) => {
 
     group.player    = false;
     group.setPlayer = (playerModel) => {
-        group.player = {
-            ...playerModel,
-            velocity: new THREE.Vector3(),
-            rVelocity: new THREE.Vector3(),
-        };
+        group.player = playerModel;
 
-        if (! group.hasOwnProperty('position')) {
-            group.position = new THREE.Vector3();
-        }
+        ['position', 'velocity', 'rVelocity'].map(key => {
+            if (! group.hasOwnProperty(key)) {
+                group[key] = new THREE.Vector3();
+            }
+        });
     };
 };
 
