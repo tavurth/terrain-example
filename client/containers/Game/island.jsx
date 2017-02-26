@@ -13,7 +13,7 @@ const HIG = 4;
 
 export async function load(textures) {
 
-    let DETAIL = LOW;
+    let DETAIL = MED;
 
     let group = Engine.group.get();
 
@@ -153,8 +153,9 @@ export async function load(textures) {
         maxChunks: cloudThick,
         minChunks: cloudThick / 2,
         textures: planet.textures.cloud,
+        worldSize: planet.terrain.worldSize,
         blockSize: planet.terrain.worldSize / 15,
-        chunkSize: planet.terrain.worldSize / 200,
+        chunkSize: planet.terrain.worldSize / 40,
     });
     planet.terrain.add(clouds);
     clouds.renderOrder = 9999;
