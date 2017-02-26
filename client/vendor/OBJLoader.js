@@ -39,24 +39,18 @@ THREE.OBJLoader.prototype = {
 
     constructor: THREE.OBJLoader,
 
-    load: function ( url, onLoad, onProgress, onError ) {
+    load: function ( key, url ) {
 
         var scope = this;
 
-        var loader = new THREE.FileLoader( scope.manager );
-        loader.setPath( this.path );
+        var loader = new THREE.FileLoader(scope.manager);
+        loader.setPath(this.path);
 
-        return new Promise((res, rej) => {
+        loader.load( url, function ( text ) {
 
-            loader.load( url, ( text ) => {
-                let parsedModel = scope.parse(text);
+			      scope.manager.onLoad( key, scope.parse( text ) );
 
-                this.manager.onLoad(parsedModel);
-
-                res(parsedModel);
-            }, onProgress, onError);
-        });
-
+		    }, scope.manager.onProgress, scope.manager.onError );
     },
 
     setPath: function ( value ) {
