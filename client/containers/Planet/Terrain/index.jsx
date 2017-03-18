@@ -2,6 +2,7 @@
 
 // Base imports
 import Options from './Options'
+import { Mesh, Texture, Vector3, Object3D, PlaneBufferGeometry } from 'three'
 
 // Used to correctly render the terrain model
 import TerrainShaderMaterial from './TerrainShaderMaterial'
@@ -12,10 +13,10 @@ const TOP    = 'TOP';    // 3;
 const BOTTOM = 'BOTTOM'; // 4;
 const UPDATE_BOUNDING_SPHERES = 8 // Update bounding spheres every n frames to save CPU
 
-class Terrain extends THREE.Object3D {
+class Terrain extends Object3D {
     constructor(options = {}) {
 
-        // Call the THREE.Object3D constructor
+        // Call the THREEObject3D constructor
         super();
 
         // Adding default options
@@ -113,7 +114,7 @@ class Terrain extends THREE.Object3D {
     load() {
         // Setup a plane geometry which will be scaled for each of our nodes
         this.renderShader = false;
-        this.planeGeometry = new THREE.PlaneBufferGeometry(1, 1, this.defines.TESSELATION, this.defines.TESSELATION);
+        this.planeGeometry = new PlaneBufferGeometry(1, 1, this.defines.TESSELATION, this.defines.TESSELATION);
         this.planeGeometry.computeBoundingSphere();
         this.updateBoundingSpheres = UPDATE_BOUNDING_SPHERES;
 
@@ -166,7 +167,7 @@ class Terrain extends THREE.Object3D {
                 uniforms: {
                     nodeEdge: edge,
                     nodeScale: scale,
-                    nodePosition: new THREE.Vector3(x + 0.5 * scale, y + 0.5 * scale)
+                    nodePosition: new Vector3(x + 0.5 * scale, y + 0.5 * scale)
                 }
             });
         };
@@ -221,7 +222,7 @@ class Terrain extends THREE.Object3D {
         this.uniforms.nodeEdge = 0;
         this.uniforms.nodeScale = 1;
         this.uniforms.cPosition = this.position;
-        this.uniforms.nodePosition = new THREE.Vector3(0,0,0);
+        this.uniforms.nodePosition = new Vector3(0,0,0);
 
         // Create our render shader
         this.renderShader = new TerrainShaderMaterial({
@@ -263,7 +264,7 @@ class Terrain extends THREE.Object3D {
                 ...node.defines
             },
         };
-        let toReturn = new THREE.Mesh(this.planeGeometry, this.renderShader.clone(node));
+        let toReturn = new Mesh(this.planeGeometry, this.renderShader.clone(node));
 
         // Add a name for use with debugging tools (THREE.js inspector)
         toReturn.name = 'TerrainNode x:' + Math.floor(node.uniforms.nodePosition.x) + ' y:' + Math.floor(node.uniforms.nodePosition.y);
@@ -375,7 +376,7 @@ class Terrain extends THREE.Object3D {
 
                 // Check only for texture types
                 if (uniform.type == 't') {
-                    if (uniform.value instanceof THREE.Texture)
+                    if (uniform.value instanceof Texture)
                         uniform.value.dispose();
                 }
             })

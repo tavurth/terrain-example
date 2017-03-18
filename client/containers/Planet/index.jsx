@@ -1,9 +1,10 @@
 "use strict";
 
+import { Object3D, Texture } from 'three'
 import Terrain from './Terrain'
 import PlanetLoader from './PlanetLoader'
 
-class Planet extends THREE.Object3D {
+class Planet extends Object3D {
     constructor(terrain, models, textures) {
 
         // Initialise the Object3D
@@ -27,7 +28,7 @@ class Planet extends THREE.Object3D {
             uniform = this.textures[tex];
 
             // Check only for texture types
-            if (uniform instanceof THREE.Texture)
+            if (uniform instanceof Texture)
                 uniform.dispose();
         })
     }

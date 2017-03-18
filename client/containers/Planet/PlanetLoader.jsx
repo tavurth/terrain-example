@@ -6,6 +6,9 @@ import Terrain from './Terrain'
 import Utils from 'modules/Utils'
 import Engine from 'modules/Engine'
 
+import OBJLoader from './OBJLoader'
+import { TextureLoader } from 'three'
+
 async function loadModelSet(models, modelLoader, loadingScreen, modelSet) {
 
     Object.keys(modelSet).map(key => {
@@ -16,7 +19,7 @@ async function loadModelSet(models, modelLoader, loadingScreen, modelSet) {
 }
 
 async function loadModels(loadingScreen, planetData) {
-    let modelLoader = new THREE.OBJLoader();
+    let modelLoader = new OBJLoader();
     let models = {count: 0};
 
     return new Promise((res, rej) => {
@@ -66,7 +69,7 @@ async function loadTextureSet(textures, textureLoader, loadingScreen, textureSet
 }
 
 async function loadTextures(loadingScreen, planetData) {
-    let textureLoader = new THREE.TextureLoader();
+    let textureLoader = new TextureLoader();
     let textures = {};
 
     return new Promise((res, rej) => {

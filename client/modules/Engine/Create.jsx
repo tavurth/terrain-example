@@ -3,6 +3,7 @@
 import Utils from '../Utils'
 import Group from './Groups'
 
+import { Scene, Vector3, WebGLRenderer, PerspectiveCamera, AmbientLight, PointLight } from 'three'
 import { vector3 } from './Vectors'
 
 let DEFAULT_TESSELATION = 8;
@@ -16,7 +17,7 @@ let createBasic = {
      * @param {} element which the engine should be appended to
      */
     engine: (element) => {
-        let engine = new THREE.WebGLRenderer({
+        let engine = new WebGLRenderer({
             canvas: element,
             antialias: false
         });
@@ -27,14 +28,14 @@ let createBasic = {
     },
 
     scene: () => {
-        return new THREE.Scene();
+        return new Scene();
     },
 
     camera: (scene, position = vector3(0, 0, 0)) => {
-        let camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1000, 1200000);
+        let camera = new PerspectiveCamera(80, window.innerWidth / window.innerHeight, 100, 120000);
 
-        camera.velocity  = new THREE.Vector3();
-        camera.rVelocity = new THREE.Vector3();
+        camera.velocity  = new Vector3();
+        camera.rVelocity = new Vector3();
 
         return camera;
     },
@@ -55,11 +56,11 @@ let createBasic = {
 
         switch ((options.type).toLowerCase()) {
             case 'point':
-                light = new THREE.PointLight(options.color, options.power, options.distance); break;
+                light = new PointLight(options.color, options.power, options.distance); break;
 
             case 'ambient':
             default:
-                light = new THREE.AmbientLight(options.color); break;
+                light = new AmbientLight(options.color); break;
         };
         light.position.set(...options.pos);
         group.scene.add(light);

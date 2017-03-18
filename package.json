@@ -22,6 +22,8 @@
         "babel-preset-react": "6.22.0",
         "babel-preset-react-hmre": "1.1.1",
         "babel-preset-stage-0": "^6.22.0",
+        "clean-webpack-plugin": "^0.1.16",
+        "copy-webpack-plugin": "^4.0.1",
         "cross-env": "3.1.4",
         "css-loader": "0.14.5",
         "eslint": "^3.15.0",
@@ -29,7 +31,7 @@
         "eslint-plugin-import": "2.2.0",
         "eslint-plugin-jsx-a11y": "3.0.2",
         "eslint-plugin-react": "6.9.0",
-        "file-loader": "0.8.5",
+        "file-loader": "^0.10.1",
         "node-sass": "^4.5.0",
         "sass-loader": "^5.0.1",
         "scss-loader": "^0.0.1",
@@ -51,6 +53,7 @@
         "react-tap-event-plugin": "2.0.1",
         "redux": "3.6.0",
         "redux-thunk": "2.2.0",
-        "three.js": "^0.77.1"
+        "stats.js": "^0.17.0",
+        "three": "^0.84.0"
     }
 }

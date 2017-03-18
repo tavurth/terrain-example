@@ -1,28 +1,39 @@
 const webpack = require('webpack');
 const path = require('path');
 
-const sourcePath = path.join(__dirname, './client');
-const staticsPath = path.join(__dirname, './static');
-const DashboardPlugin = require('webpack-dashboard/plugin');
+const sourcePath         = path.join(__dirname, './client');
+const staticsPath        = path.join(__dirname, './static');
+const CopyWebpackPlugin  = require('copy-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+const DashboardPlugin    = require('webpack-dashboard/plugin');
 
 module.exports = function (env) {
     const nodeEnv = env && env.prod ? 'production' : 'development';
     const isProd = nodeEnv === 'production';
 
     const plugins = [
-        new webpack.optimize.CommonsChunkPlugin({
-            name: 'vendor',
-            minChunks: Infinity,
-            filename: 'vendor/vendor.bundle.js'
-        }),
         new webpack.DefinePlugin({
             'process.env': { NODE_ENV: JSON.stringify(nodeEnv) }
         }),
         new webpack.NamedModulesPlugin(),
+        new webpack.optimize.CommonsChunkPlugin({
+            name: 'lib',
+            minChunks: function (module) {
+                // this assumes your vendor imports exist in the node_modules directory
+                return module.context && module.context.indexOf('node_modules') !== -1;
+            }
+        })
     ];
 
     if (isProd) {
         plugins.push(
+            new CleanWebpackPlugin('dist', {
+                dry: false,
+                verbose: true
+            }),
+            new CopyWebpackPlugin([
+                { from: 'assets', to: 'assets' }
+            ]),
             new webpack.LoaderOptionsPlugin({
                 minimize: true,
                 debug: false
@@ -56,12 +67,11 @@ module.exports = function (env) {
         devtool: isProd ? 'source-map' : 'eval',
         context: sourcePath,
         entry: {
-            js: './index.js',
-            vendor: ['react']
+            app: [ 'babel-polyfill', './index.js' ]
         },
         output: {
-            path: staticsPath,
-            filename: '[name].bundle.js'
+            filename: '[name].bundle.js',
+            path: path.resolve(__dirname, 'dist')
         },
         module: {
             rules: [
@@ -90,16 +100,20 @@ module.exports = function (env) {
             ]
         },
         resolve: {
-            extensions: ['.webpack-loader.js', '.web-loader.js', '.loader.js', '.js', '.jsx', '.sass'],
+            extensions: [
+                '.js',
+                '.jsx',
+                '.sass',
+                '.loader.js',
+                '.web-loader.js',
+                '.webpack-loader.js'
+            ],
             modules: [
                 path.resolve(__dirname, 'node_modules'),
                 sourcePath
             ]
         },
-
         externals: {
-            'react': 'React',
-            'react-dom': 'ReactDOM'
         },
 
         plugins,

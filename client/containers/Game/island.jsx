@@ -1,15 +1,28 @@
 "use strict";
 
-import './FlyControls'
 import Clouds from './clouds'
 import Engine from 'modules/Engine'
 import Planet from 'containers/Planet'
+import DragControls from './DragControls'
 import Mountains from 'containers/Planet/Environments/Mountains'
+
+import Water from './Water'
 
 const ULO = 0;
 const LOW = 1;
 const MED = 2;
 const HIG = 4;
+
+import {
+    Mesh,
+    FogExp2,
+    Vector3,
+    PointLight,
+    AmbientLight,
+    RawShaderMaterial,
+    InstancedBufferGeometry,
+    InstancedBufferAttribute
+} from 'three'
 
 export async function load(textures) {
 
@@ -18,13 +31,13 @@ export async function load(textures) {
     let group = Engine.group.get();
 
     // Setup the Sun
-    let sun = new THREE.AmbientLight(0x232331);
+    let sun = new AmbientLight(0x232331);
 
     // Setup the light
     let rotation = 0;
-    let light = new THREE.PointLight(0x8899AA, 2, 8000000);
+    let light = new PointLight(0x8899AA, 2, 8000000);
 
-    let elevation = '8600.';
+    let elevation = '5600.';
     let worldSize = 4096 * 16 + '.';
 
     // Setup the terrain shader
@@ -53,10 +66,10 @@ export async function load(textures) {
     // Load the planet and setup the terrain
     let planet = await Planet.load({
         models: {
-            tree: '/assets/models/tree/Tree.obj',
-            plane: '/assets/models/glider/Glider.obj',
+            tree: '/assets/models/tree/Tree.obj'
         },
         textures: {
+            watermap: '/assets/textures/watermap.png',
             terrain: {
                 grass01: '/assets/textures/grass01.png',
                 stone01: '/assets/textures/stone01.png',
@@ -74,35 +87,31 @@ export async function load(textures) {
             // Add the mountain shader
             ...terrainShader,
 
-            nLevels: 4,
+            nLevels: 2,
             defines: {
                 ELEVATION: elevation,
                 WORLD_SIZE_X: worldSize,
                 WORLD_SIZE_Y: worldSize,
-                VIEWPORT_SIZE: worldSize / 2,
+                VIEWPORT_SIZE: worldSize,
                 TESSELATION: terrainTesselate + '.'
             }
         },
     });
-    planet.add(light);
-    planet.add(sun);
 
-    let waterGeo = new THREE.PlaneGeometry(planet.terrain.worldSize * 32, planet.terrain.worldSize * 32, 1, 1);
-    let waterMat = new THREE.MeshPhongMaterial({
-        color: 0x112255,
-        emissive: 0x112255,
-        fog: true,
+    let water = new Water({
+        camera: group.camera,
+        terrain: planet.terrain,
+        width: planet.terrain.worldSize * 32,
+        height: planet.terrain.worldSize * 32,
+        watermap: planet.textures['watermap'],
     });
-    let waterMesh = new THREE.Mesh(waterGeo, waterMat);
-    waterMesh.frustumCulled = false;
-    planet.add(waterMesh);
 
     let stopped = false;
     let updateLight = () => {
 
         if (stopped)
             return;
-        rotation += 0.001;
+        rotation += 0.005;
 
         light.position.copy({
             x: planet.terrain.worldSize + Math.cos(rotation) * planet.terrain.worldSize * 4,
@@ -120,23 +129,27 @@ export async function load(textures) {
     });
     Engine.register(updateLight);
 
-    let cloudNum, cloudThick;
+    let cloudNum, cloudThick, cloudChunks;
     switch (DETAIL) {
         case HIG:
-            cloudNum = 80;
-            cloudThick = 600;
+            cloudNum = 40;
+            cloudThick = 80;
+            cloudChunks = 150;
             break;
         case MED:
-            cloudNum = 40;
-            cloudThick = 300;
+            cloudNum = 20;
+            cloudThick = 40;
+            cloudChunks = 30;
             break;
         case LOW:
-            cloudNum = 20;
-            cloudThick = 150;
+            cloudNum = 10;
+            cloudThick = 20;
+            cloudChunks = 20;
             break;
         default:
-            cloudNum = 10;
-            cloudThick = 75;
+            cloudNum = 5;
+            cloudThick = 10;
+            cloudChunks = 10;
             break;
     }
 
@@ -147,85 +160,64 @@ export async function load(textures) {
         pos: [
             planet.terrain.worldSize / 2,
             planet.terrain.worldSize / 2,
-            planet.terrain.elevation / 8
+            planet.terrain.elevation / 2
         ],
         blocks: cloudNum,
-        maxChunks: cloudThick,
-        minChunks: cloudThick / 2,
+        maxChunks: cloudChunks,
+        minChunks: cloudChunks / 2,
         textures: planet.textures.cloud,
         worldSize: planet.terrain.worldSize,
-        blockSize: planet.terrain.worldSize / 15,
-        chunkSize: planet.terrain.worldSize / 40,
+        blockSize: planet.terrain.worldSize / 5,
+        chunkSize: planet.terrain.worldSize / cloudThick,
     });
     planet.terrain.add(clouds);
     clouds.renderOrder = 9999;
 
-    // Add the plane to the scene
-    let plane = planet.models['plane'];
-    plane.material = new THREE.MeshPhongMaterial({
-        color: 0xffffff,
-        emissive: 0xffffff,
-        depthTest: false,
-    });
-    group.scene.fog = new THREE.FogExp2(0x7F99E5, 0.000009);
-
-    // Setting up the glider
-    group.scene.add(plane);
-    plane.scale.set(0.1,0.1,0.1);
-
-    // Setting up the player
-    group.setPlayer(plane);
-
-    // Important that we reset the camera's UP vector,
-    // As terrain is in the X-Y space, rather than the standard X-Z space
-    plane.up.set(0, 0, 1);
-    plane.add(group.camera);
+    group.scene.fog = new FogExp2(0x7F99E5, 0.000009);
     group.camera.up.set(0, 0, 1);
 
     // Setting up the position of the camera
-    plane.position.y = planet.terrain.worldSize;
-    plane.position.x = planet.terrain.worldSize / 8;
-    plane.position.z = planet.terrain.elevation / 4;
-    plane.rotation.x = Math.PI / 2;
-    plane.rotation.y = - Math.PI / 2;
-
-    // Move the plane in front of the camera
-    group.camera.position.z += 2000;
-    group.camera.position.y += 2000;
-    group.camera.rotation.x = -Math.PI / 6;
+    group.camera.position.y = planet.terrain.worldSize;
+    group.camera.position.x = planet.terrain.worldSize / 6;
+    group.camera.position.z = planet.terrain.elevation * 2;
+    group.camera.rotation.x = Math.PI / 8;
 
     // Setup controls for the player
-    let controls = new THREE.FlyControls(group.player, window.body);
-    controls.rollSpeed = 0.004;
-    controls.movementSpeed = .1;
-    controls.autoForward = true;
+    let controls = new DragControls(
+        group.camera,
+        document.body,
+        {
+            minPosition: new Vector3(-planet.terrain.worldSize * 4, -planet.terrain.worldSize * 4, planet.terrain.elevation / 4),
+            maxPosition: new Vector3( planet.terrain.worldSize * 4,  planet.terrain.worldSize * 4, planet.terrain.elevation * 5),
+            minVelocity: new Vector3(-10000, -10000, -10000),
+            maxVelocity: new Vector3( 10000,  10000,  10000)
+        }
+    );
 
     // Move the water with the player
     let lastTime = performance.now();
     Engine.register(() => {
-        if (! group.player)
-            return;
 
         let nowTime = performance.now();
         controls.update(nowTime - lastTime);
         lastTime = nowTime;
 
-        waterMesh.position.copy(group.player.position);
-        waterMesh.position.z = 130;
+        water.position.copy(group.camera.position);
+        water.position.z = 140;
 
         // Animate the movement of terrain
-        planet.animate(group.player.position);
+        planet.animate(group.camera.position);
     });
 
     // Trees mesh instancing setup
     let geo = planet.models['tree'].children[0].geometry;
-    let treeGeo = new THREE.InstancedBufferGeometry();
+    let treeGeo = new InstancedBufferGeometry();
     treeGeo.addAttribute('position', geo.attributes.position);
     treeGeo.addAttribute('normal', geo.attributes.normal);
 
     // Forsest instancing setup
     let nTrees = 20000;
-    let treesMaxZ = 1200;
+    let treesMaxZ = 800;
     let treesMinZ = 300;
 
     switch (DETAIL) {
@@ -242,8 +234,8 @@ export async function load(textures) {
     treeGeo.maxInstancedCount = nTrees;
 
     // Attributes used for each tree
-    let scales = new THREE.InstancedBufferAttribute(new Float32Array(nTrees), 1, 1);
-    let offsets = new THREE.InstancedBufferAttribute(new Float32Array(nTrees * 3), 3, 1);
+    let scales = new InstancedBufferAttribute(new Float32Array(nTrees), 1, 1);
+    let offsets = new InstancedBufferAttribute(new Float32Array(nTrees * 3), 3, 1);
 
     for (let x,y,z, i = 0; i < nTrees;) {
 
@@ -281,7 +273,9 @@ export async function load(textures) {
     }
     `;
     let fShader = `
-    precision highp float;
+    precision mediump float;
+
+    `+ Engine.noise('classic2D') + `
 
     varying vec3 vNormal;
     varying vec3 vPosition;
@@ -290,15 +284,18 @@ export async function load(textures) {
 
     void main() {
 
-        if (gl_FragCoord.z > .99)
-            discard;
-
-        vec3 diffuse = vec3(0., 0.3, 0.1);
+        vec3 diffuse;
+        diffuse = mix(vec3(0, 0.05, 0.02), vec3(0., 0.3, 0.1), cnoise(vNormal.xy + vPosition.xy / 10.));
 
         // Add distance fog
         float depth = gl_FragCoord.z / gl_FragCoord.w;
         float fogAmount = smoothstep(WORLD_SIZE / 8., WORLD_SIZE * 3., depth);
         diffuse = mix(diffuse, vec3(0.5, 0.6, 0.95), fogAmount);
+
+        if (depth > WORLD_SIZE / 4.) {
+            gl_FragColor = vec4(diffuse, 1. - depth / (WORLD_SIZE /2.));
+            return;
+        }
 
         // Add the point light
         vec3 vLightOffset = vPosition - light;
@@ -307,11 +304,11 @@ export async function load(textures) {
         diffuse = mix(mix(vec3(0.1), diffuse, 0.3), diffuse * 1.8, incidence);
 
         // Fade out trees at the edge of the far-clip
-        gl_FragColor = vec4(diffuse, 1. - smoothstep(0.985, 0.99, gl_FragCoord.z));
+        gl_FragColor = vec4(diffuse, 1. - fogAmount);
     }
     `;
 
-    let trees = new THREE.Mesh(treeGeo, new THREE.RawShaderMaterial({
+    let trees = new Mesh(treeGeo, new RawShaderMaterial({
         transparent: true,
         vertexShader: vShader,
         fragmentShader: fShader,
@@ -323,6 +320,10 @@ export async function load(textures) {
         }
     }));
     trees.frustumCulled = false;
+
+    planet.add(light);
+    planet.add(water);
+    planet.add(sun);
     planet.terrain.add(trees);
 
     return planet;

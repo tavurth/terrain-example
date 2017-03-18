@@ -2,6 +2,7 @@
 
 import Engine from './'
 import Utils from '../Utils'
+import Stats from 'stats.js'
 
 let currentGroup = false;
 
@@ -18,7 +19,7 @@ let setup = (group) => {
     group.renderCallbacks = {};
 
     group.stats = new Stats();
-    document.body.appendChild(group.stats.dom);
+    // document.body.appendChild(group.stats.dom);
 
     group.status = 'RUNNING';
     group.uid = Utils.generate_name('Group');

@@ -1,6 +1,7 @@
 'use strict';
 
-import { connect } from 'react-redux'
+import React from 'react'
+import ReactDOM from 'react-dom'
 
 import './index.scss'
 

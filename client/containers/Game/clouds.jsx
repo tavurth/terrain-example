@@ -1,5 +1,14 @@
 "use strict";
 
+import {
+    Mesh,
+    ShaderMaterial,
+    MultiplyBlending,
+    CircleBufferGeometry,
+    InstancedBufferGeometry,
+    InstancedBufferAttribute,
+} from 'three'
+
 import Utils from 'modules/Utils'
 import Engine from 'modules/Engine'
 
@@ -79,22 +88,22 @@ let create = (options = {}) => {
     let group = Engine.group.get();
 
     // Base material for points
-    let geometry = new THREE.InstancedBufferGeometry();
-    geometry.copy(new THREE.CircleBufferGeometry(1, 4));
+    let geometry = new InstancedBufferGeometry();
+    geometry.copy(new CircleBufferGeometry(1, 6));
 
     let texUniforms = [];
     for (let tex in options.textures) {
         texUniforms[tex] = { type: 't', value: options.textures[tex] }
     }
 
-    let material = new THREE.ShaderMaterial({
+    let material = new ShaderMaterial({
         // lights: true,
         depthTest: true,
         depthWrite: false,
         transparent: true,
 
         // Alpha blending
-        // blending: THREE.MultiplyBlending,
+        // blending: MultiplyBlending,
 
         // Shader
         vertexShader: vertexShader,
@@ -111,8 +120,8 @@ let create = (options = {}) => {
     // Adding each point
     options.halfWidth = options.width / 2;
     options.halfHeight = options.height / 2
-    let sizes = new THREE.InstancedBufferAttribute(new Float32Array(options.blocks * options.maxChunks), 1, 1);
-    let offsets = new THREE.InstancedBufferAttribute(new Float32Array(options.blocks * options.maxChunks * 3), 3, 1);
+    let sizes = new InstancedBufferAttribute(new Float32Array(options.blocks * options.maxChunks), 1, 1);
+    let offsets = new InstancedBufferAttribute(new Float32Array(options.blocks * options.maxChunks * 3), 3, 1);
 
     let chunkX, chunkY, chunkZ;
     let chunkSkewX, chunkSkewY, chunkSkewZ;
@@ -148,7 +157,7 @@ let create = (options = {}) => {
     geometry.addAttribute('offset', offsets);
 
     // material.color.setHSL(...options.color);
-    let particles = new THREE.Mesh(geometry, material);
+    let particles = new Mesh(geometry, material);
 
     // Make sure the particles don't get culled out when we move the camera
     // TODO: Check to see if there's a more efficient way of doing this

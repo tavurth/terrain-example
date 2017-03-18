@@ -28,6 +28,8 @@ void main() {
     gl_FragColor = color;
 }`;
 
+import { Scene, Mesh, OrthographicCamera, Vector3, PlaneGeometry, ShaderMaterial } from 'three'
+
 class LoadingScreen {
     constructor(options = {}) {
 
@@ -42,23 +44,23 @@ class LoadingScreen {
 
         // Setup the camera which will photograph the texture once it's complete
         this.group.camera =
-            new THREE.OrthographicCamera(-options.resolution/2,
+            new OrthographicCamera(-options.resolution/2,
                                          options.resolution/2,
                                          options.resolution/2,
                                         -options.resolution/2,
                                         -100,
                                          100);
 
-        this.group.camera.velocity = new THREE.Vector3();
+        this.group.camera.velocity = new Vector3();
 
         // Will be incremented as we load
-        this.loadedPct = 0.0; // new THREE.Vector2(0.0);
+        this.loadedPct = 0.0; // new Vector2(0.0);
 
         // Create the scene and add our plane which will be used for the texture generation
-        this.group.scene = new THREE.Scene();
-        this.plane = new THREE.Mesh(
-            new THREE.PlaneGeometry(options.resolution, options.resolution),
-            new THREE.ShaderMaterial({
+        this.group.scene = new Scene();
+        this.plane = new Mesh(
+            new PlaneGeometry(options.resolution, options.resolution),
+            new ShaderMaterial({
                 vertexShader: vShader,
                 fragmentShader: fShader,
                 uniforms: {

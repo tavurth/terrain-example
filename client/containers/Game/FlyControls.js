@@ -4,7 +4,9 @@
  * @author William Whitty (Heavy Modification) https://github.com/tavurth
  */
 
-THREE.FlyControls = function (object, domElement) {
+import { Quaternion, Vector3 } from 'three';
+
+let FlyControls = function (object, domElement) {
     this.object = object;
     this.domElement = (domElement !== undefined) ? domElement : document;
     if (domElement) this.domElement.setAttribute('tabindex', - 1);
@@ -15,11 +17,11 @@ THREE.FlyControls = function (object, domElement) {
 
     // disable default target object behavior
     // internals
-    this.tmpQuaternion = new THREE.Quaternion();
+    this.tmpQuaternion = new Quaternion();
 
-    this.forward = new THREE.Vector3(0,0,0);
-    this.moveVector = new THREE.Vector3(0,0,0);
-    this.rotationVector = new THREE.Vector3(0,0,0);
+    this.forward = new Vector3(0,0,0);
+    this.moveVector = new Vector3(0,0,0);
+    this.rotationVector = new Vector3(0,0,0);
 
     this.moveState = {
         yawLeft: 0,
@@ -68,6 +70,14 @@ THREE.FlyControls = function (object, domElement) {
         case 88: /*X*/
             this.moveState.yawRight = type;
             break;
+
+        case 65: /*A*/
+            this.movementSpeed *= 1.1;
+            break;
+
+        case 83: /*S*/
+            this.movementSpeed *= 0.9;
+            break;
         }
         this.updateMovementVector();
         this.updateRotationVector();
@@ -82,7 +92,7 @@ THREE.FlyControls = function (object, domElement) {
         this.object.translateY(this.moveVector.y * moveMult);
         this.object.translateZ(this.moveVector.z * moveMult);
 
-        this.rotationVector.divideScalar(1 + this.rollSpeed * 2);
+        this.rotationVector.divideScalar(1 + this.rollSpeed * 4);
 
         // Update the object rotation
         this.tmpQuaternion.set(this.rotationVector.x * rotMult, this.rotationVector.y * rotMult, this.rotationVector.z * rotMult, 1).normalize();

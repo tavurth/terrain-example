@@ -15,7 +15,7 @@ void main() {
 
     vUv2 = uv;
     vPosition    = _vPosition;
-    vElevation   = _vElevation;
+    vElevation   = _vElevation / ELEVATION * 4.;
     vClipFactor  = _vClipFactor;
     vDistance    = distance(vec3(0., 0., cameraPosition.z / 2.), position * nodeScale + nodePosition);
 
@@ -33,9 +33,9 @@ varying float vClipFactor;
 uniform vec3  light;
 uniform float nodeScale;
 uniform float snowLevel;
+uniform float sandLevel;
 uniform float stoneLevel;
 uniform float grassLevel;
-uniform float waterLevel;
 uniform float elevation;
 
 uniform vec3  cPosition;
@@ -91,7 +91,7 @@ void main() {
     bool useNoise = true;
 
     // Random elements
-    vec3 noise1 = useNoise ? vec3(cnoise(vUv * 5000.)) : vec3(0.0);
+    vec3 noise1 = useNoise ? vec3(cnoise(vUv * 3000.)) : vec3(0.0);
     vec3 noise3 = useNoise ? vec3(cnoise(vUv * 50000.)): vec3(0.0);
 
     noise1 = mix(noise1, vec3(0.), smoothstep(VIEWPORT_SIZE / 64., VIEWPORT_SIZE / 16., vDistance));
@@ -105,15 +105,15 @@ void main() {
     stone = mix(stone, mix(noise1, noise3, 0.2), 0.4);
 
     vec3 grass  = multisample(grass01, vUv);
-    grass = mix(grass, noise3 / 2. + noise1 / 10., 0.2);
+    grass = mix(grass, mix(noise1, noise3, 0.4), 0.2);
 
     vec3 diffuse = stone;
 
-    // Mix grass
-    diffuse = mix(diffuse, grass, smoothstep(waterLevel, grassLevel, vElevation));
-
     // Mix sandy grass
-    diffuse = mix(diffuse, mix(grass, vec3(0.4,0.3,0.01), 0.3), smoothstep(stoneLevel-0.12, stoneLevel, vElevation));
+    diffuse = mix(diffuse, mix(vec3(0.4,0.3,0.01), mix(noise1, noise3, 0.8), 0.2), smoothstep(0., sandLevel, vElevation));
+
+    // Mix grass
+    diffuse = mix(diffuse, grass, smoothstep(sandLevel + 0.05, grassLevel, vElevation));
 
     // Mix stone
     diffuse = mix(diffuse, stone, smoothstep(grassLevel, stoneLevel, vElevation));
@@ -121,7 +121,7 @@ void main() {
     // Mix in snow
     // Caclulate the amount of snow sticking to slopes
     vec3 normal = getNormal();
-    diffuse = mix(diffuse, snow, smoothstep(snowLevel, snowLevel * 1.4, vElevation) * smoothstep(0.5, 0.95, normal.z));
+    diffuse = mix(diffuse, snow, smoothstep(snowLevel, snowLevel * 1.4, vElevation) * smoothstep(0.8, 0.95, normal.z));
 
     // Add the point light
     normal = getNormal();
@@ -131,7 +131,7 @@ void main() {
     diffuse = mix(mix(vec3(0.1), diffuse, 0.3), diffuse * 1.8, incidence);
 
     float depth = gl_FragCoord.z / gl_FragCoord.w;
-    float fogAmount = smoothstep(WORLD_SIZE_X * (vElevation / ELEVATION), WORLD_SIZE_X * 3., depth);
+    float fogAmount = smoothstep(WORLD_SIZE_X * vElevation, WORLD_SIZE_X * 3., depth);
     diffuse = mix(diffuse, vec3(0.5, 0.6, 0.95), fogAmount);
 
     if (debug) {
@@ -156,10 +156,10 @@ export default function(terrainData, textures) {
                 derivatives: true
             },
             uniforms: {
-                snowLevel:    { type: 'f',  value: elevation * 0.28 },
-                stoneLevel:   { type: 'f',  value: elevation * 0.25 },
-                grassLevel:   { type: 'f',  value: elevation * 0.08 },
-                waterLevel:   { type: 'f',  value: elevation * 0.00 },
+                snowLevel:    { type: 'f',  value: 0.6 },
+                stoneLevel:   { type: 'f',  value: 0.5 },
+                grassLevel:   { type: 'f',  value: 0.25 },
+                sandLevel:    { type: 'f',  value: 0.01 },
                 light:        { type: 'v3', value: terrainData.uniforms.light.position },
             },
             vertexShader: vShader,
