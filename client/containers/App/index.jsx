@@ -4,26 +4,25 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import Canvas from 'components/Canvas'
-import Game from 'containers/Game'
+import Splash from 'containers/Splash'
 
 class App extends React.Component {
 
-	  constructor(props) {
-		    super(props);
+    constructor(props) {
+        super(props);
+    }
 
-        this.id = 'main-render-canvas';
-	  }
+    componentDidMount() {
+    }
 
-	  componentDidMount() {
-		    Game.start(this.id);
-	  }
-
-	  render() {
-		    return (
-            {/* Our rendering context */},
-			      <Canvas id={this.id}></Canvas>
-		    )
-	  }
+    render() {
+        return (
+            <div className='full-size'>
+                <Splash/>
+                <Canvas id='main-render-canvas'/>
+            </div>
+        );
+    }
 }
 
-export default connect()(App)
+export default connect()(App);

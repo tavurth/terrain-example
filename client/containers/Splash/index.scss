@@ -1,0 +1,35 @@
+.splash-screen {
+    color: white;
+    background: black;
+
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 100%;
+    z-index: 90;
+
+    > div {
+        height: 20%;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    #quality-levels {
+        height: 20%;
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        justify-content: space-between;
+
+        button {
+            & > div {
+                color: white;
+            }
+            border: 1px solid #484848 !important;
+            margin: 20px !important;
+        }
+    }
+}

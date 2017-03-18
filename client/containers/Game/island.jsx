@@ -12,6 +12,7 @@ const ULO = 0;
 const LOW = 1;
 const MED = 2;
 const HIG = 4;
+const VHI = 8;
 
 import {
     Mesh,
@@ -24,9 +25,24 @@ import {
     InstancedBufferAttribute
 } from 'three'
 
-export async function load(textures) {
+export async function load(setting) {
 
-    let DETAIL = MED;
+    let DETAIL;
+
+    switch (setting) {
+        case 'ultra-low':
+            DETAIL = ULO; break;
+        case 'low':
+            DETAIL = LOW; break;
+        case 'medium':
+            DETAIL = MED; break;
+        case 'high':
+            DETAIL = HIG; break;
+        case 'very-high':
+            DETAIL = VHI; break;
+        default:
+            DETAIL = ULO; break;
+    }
 
     let group = Engine.group.get();
 
@@ -132,30 +148,30 @@ export async function load(textures) {
     let cloudNum, cloudThick, cloudChunks;
     switch (DETAIL) {
         case HIG:
-            cloudNum = 40;
+            cloudNum = 14;
             cloudThick = 80;
             cloudChunks = 150;
             break;
         case MED:
-            cloudNum = 20;
-            cloudThick = 40;
+            cloudNum = 12;
+            cloudThick = 60;
             cloudChunks = 30;
             break;
         case LOW:
             cloudNum = 10;
-            cloudThick = 20;
+            cloudThick = 30;
             cloudChunks = 20;
             break;
         default:
             cloudNum = 5;
-            cloudThick = 10;
+            cloudThick = 20;
             cloudChunks = 10;
             break;
     }
 
     let clouds = Clouds.create({
-        width: planet.terrain.worldSize,
-        height: planet.terrain.worldSize,
+        width: planet.terrain.worldSize * 2,
+        height: planet.terrain.worldSize * 2,
         depth: planet.terrain.elevation * 2,
         pos: [
             planet.terrain.worldSize / 2,

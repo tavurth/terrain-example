@@ -8,11 +8,11 @@ import Planet from 'containers/Planet'
 import Island from './island'
 
 let group, planet;
-export async function run(canvasId) {
+export async function run(canvasId, setting) {
 
     group = Engine.group.create(canvasId);
 
-    let planet = await Island.load();
+    let planet = await Island.load(setting);
 
     group.scene.add(planet);
     group.engine.setClearColor(0x4873bd);
@@ -42,13 +42,13 @@ export function restart(type) {
     run(savedCanvasId);
 }
 
-export function start(canvasId) {
+export function start(canvasId, setting) {
     if (! savedCanvasId)
         savedCanvasId = canvasId;
 
     Engine.register(restart, 'hot-reload');
 
-    run(canvasId);
+    run(canvasId, setting);
 };
 
 export default {
