@@ -1,7 +1,9 @@
 "use strict";
 
+import Config from '/modules/Config'
+
 let defaultState = {
-    splash: true
+    splash: ! Config.debugMode
 };
 
 export default function(state = defaultState, action = {}) {
