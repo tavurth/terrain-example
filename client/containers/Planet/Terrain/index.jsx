@@ -51,6 +51,9 @@ class Terrain extends Object3D {
             load:           options.load,
             nLevels:        options.nLevels || 3,      // Number of rings of nodes to generate
 
+            // Descale height data for faster loading
+            heightDataDescale: options.heightDataDescale || 1,
+
             // Send in progress loading functions
             onError:        options.onError     || ((errorMessage) => {}),
             onLoad:         options.onLoad      || ((terrainObject) => {}),
@@ -85,6 +88,9 @@ class Terrain extends Object3D {
         if (options.material.uniforms.texture && options.material.uniforms.texture.type == 't') {
             options.material.uniforms.texture = options.material.texture.value;
         }
+
+        // Should we generate the heightmap array?
+        this.heightDataDescale = options.heightDataDescale;
 
         // Functions used to keep track of the loading process
         // Initialise these to receive callbacks
@@ -305,7 +311,7 @@ class Terrain extends Object3D {
      */
     initializeHeightmap() {
         if (! this.heightmap) {
-            throw "Oh shit";
+            throw "No heightmap data found!";
             return;
         }
         let heightmap, tempCanvas, tempContext, heightData;
@@ -317,8 +323,8 @@ class Terrain extends Object3D {
 
         // Create a temp canvas of the width and height, we'll write here to then retrieve the data
         tempCanvas = document.createElement('canvas');
-        tempCanvas.width  = heightmap.width;
-        tempCanvas.height = heightmap.height;
+        tempCanvas.width  = heightmap.width / this.heightDataDescale;
+        tempCanvas.height = heightmap.height / this.heightDataDescale;
 
         this.onProgress('Terrain/CreateHeightmap', 25, 100);
 

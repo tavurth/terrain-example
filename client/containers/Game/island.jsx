@@ -112,7 +112,7 @@ export async function load(setting) {
                 TESSELATION: terrainTesselate + '.'
             }
         },
-    });
+    }, DETAIL+1);
 
     let water = new Water({
         camera: group.camera,

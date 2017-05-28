@@ -78,7 +78,7 @@ async function loadTextures(loadingScreen, planetData) {
     });
 };
 
-async function loadTerrain(loadingScreen, planetData, textures) {
+async function loadTerrain(loadingScreen, planetData, textures, heightDataDescale) {
     return new Promise((res, rej) => {
 
         let textureUniforms = {};
@@ -92,13 +92,14 @@ async function loadTerrain(loadingScreen, planetData, textures) {
 
         // Creating our terrain
         let terrain = new Terrain({
-            load: false, // We'll load using the *LoadingScreen* class at a later time
-            nLevels: 2,  // How detailed the users viewport is
             uniforms: {
                 ...planetData.uniforms,
                 ...textureUniforms
             },
-            ...planetData.terrain
+            ...planetData.terrain,
+            heightDataDescale: heightDataDescale,
+            nLevels: 2,  // How detailed the users viewport is
+            load: false // We'll load using the *LoadingScreen* class at a later time
         });
 
         loadingScreen.setup(terrain, () => res(terrain), rej);
@@ -106,13 +107,13 @@ async function loadTerrain(loadingScreen, planetData, textures) {
     });
 };
 
-async function load(planetData) {
+async function load(planetData, detail) {
     let loadingScreen = new Engine.LoadingScreen();
 
     // Load data which may take a while
     let models   = await loadModels(loadingScreen, planetData);
     let textures = await loadTextures(loadingScreen, planetData);
-    let terrain  = await loadTerrain(loadingScreen, planetData, textures);
+    let terrain  = await loadTerrain(loadingScreen, planetData, textures, Math.max(1, (detail/8)*4));
 
     // Create our planet from the data
     let planet   = new Planet(terrain, models, textures);

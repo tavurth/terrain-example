@@ -18,7 +18,7 @@ let express = require('express');
     let app = express();
 
     // Setting up environment variables
-    app.set('port', 8888);
+    app.set('port', 8282);
     console.log("App listening on", app.get('port'));
 
     // Use static file hosting
