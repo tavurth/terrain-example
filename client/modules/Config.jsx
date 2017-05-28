@@ -1,6 +1,6 @@
 "use strict";
 
-let debugMode = true;
+let debugMode = false;
 
 export default {
     debugMode
