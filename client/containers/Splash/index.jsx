@@ -4,6 +4,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import FlatButton from 'material-ui/FlatButton';
 
+import Config from 'modules/Config'
 import Game from 'containers/Game'
 
 import './index.scss'
@@ -21,6 +22,12 @@ class Splash extends React.Component {
         });
 
         Game.start('main-render-canvas', setting);
+    }
+
+    componDidMount() {
+        if (Config.debugMode) {
+            this.selectQuality('low');
+        }
     }
 
     render() {

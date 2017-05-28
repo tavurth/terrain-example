@@ -2,6 +2,6 @@
 
 let debugMode = true;
 
-export.default {
+export default {
     debugMode
 }

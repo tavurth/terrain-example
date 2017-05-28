@@ -1,6 +1,6 @@
 "use strict";
 
-import Config from '/modules/Config'
+import Config from 'modules/Config'
 
 let defaultState = {
     splash: ! Config.debugMode

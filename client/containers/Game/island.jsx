@@ -337,6 +337,7 @@ export async function load(setting) {
     }));
     trees.frustumCulled = false;
 
+
     planet.add(light);
     planet.add(water);
     planet.add(sun);
