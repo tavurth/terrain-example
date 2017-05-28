@@ -113,7 +113,7 @@ async function load(planetData, detail) {
     // Load data which may take a while
     let models   = await loadModels(loadingScreen, planetData);
     let textures = await loadTextures(loadingScreen, planetData);
-    let terrain  = await loadTerrain(loadingScreen, planetData, textures, Math.max(1, (detail/8)*4));
+    let terrain  = await loadTerrain(loadingScreen, planetData, textures, Math.max(1, (detail/32)*4));
 
     // Create our planet from the data
     let planet   = new Planet(terrain, models, textures);
